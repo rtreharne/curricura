@@ -72,6 +72,7 @@ curricura/
 ├── ingest/           # Parsing logic for Canvas zips and transcripts
 ├── embed/            # Chunking + embedding pipeline
 ├── chat/             # Chat interface and GPT logic
+├── config/           # settings.py etc ...
 ├── core/             # Django models and utilities
 ├── templates/        # Frontend templates
 ├── static/           # Static assets (JS, CSS)
@@ -99,13 +100,31 @@ curricura/
 
 > ⚠️ Deployment is not required at this stage. Curricura runs fully locally.
 
-Requirements:
+### Requirements:
 - Docker
 - OpenAI API key
 - Canvas export `.zip` file
 - Transcripts folder (optional)
 
-Development setup and run instructions will be added soon.
+### Setup
+
+1. Clone the repo and cd into the folder.
+
+2. Copy .env.example to .env and update your DATABASE_URL and OPENAI_API_KEY.
+
+3. Build and run the stack:
+
+```bash
+docker compose up --build
+```
+
+4. Open your browser at: http://localhost:8020
+
+### Notes
+
+The container waits for PostgreSQL to be ready before running migrations automatically.
+
+Port 8020 is used to avoid conflicts with existing local services.
 
 ---
 
