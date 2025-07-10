@@ -67,16 +67,18 @@ Curricura solves this by turning static materials into a dynamic assistant that:
 
 ## 📦 Project Structure
 
+```plaintext
 curricura/
-├── ingest/ # Parsing logic for Canvas zips and transcripts
-├── embed/ # Chunking + embedding pipeline
-├── chat/ # Chat interface and GPT logic
-├── core/ # Django models and utilities
-├── templates/ # Frontend templates
-├── static/ # Static assets (JS, CSS)
+├── ingest/           # Parsing logic for Canvas zips and transcripts
+├── embed/            # Chunking + embedding pipeline
+├── chat/             # Chat interface and GPT logic
+├── core/             # Django models and utilities
+├── templates/        # Frontend templates
+├── static/           # Static assets (JS, CSS)
 ├── manage.py
 ├── Dockerfile
 └── docker-compose.yml
+```
 
 ---
 
