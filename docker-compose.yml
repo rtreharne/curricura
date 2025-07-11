@@ -17,6 +17,7 @@ services:
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/app
+      - ./media:/app/media
     ports:
       - "8020:8000"
     depends_on:
@@ -29,7 +30,7 @@ services:
     image: redis:7
     ports:
       - "6379:6379"
-  
+
   worker:
     build: .
     command: celery -A config worker --loglevel=info
@@ -38,6 +39,9 @@ services:
     depends_on:
       - redis
       - db
+    environment:
+      - DEBUG=1
+      - DATABASE_URL=postgres://curricura:curricura@db:5432/curricura
 
 volumes:
   pgdata:

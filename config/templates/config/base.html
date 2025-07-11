@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Curricura{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen">
+
+  <header class="bg-white shadow-md py-4">
+    <div class="container mx-auto px-4 flex justify-between items-center">
+      <h1 class="text-xl font-semibold text-indigo-600">Curricura</h1>
+      <nav>
+        <a href="/" class="text-gray-600 hover:text-indigo-600 px-3">Home</a>
+        <a href="/ingest/upload/" class="text-gray-600 hover:text-indigo-600 px-3">Upload</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container mx-auto px-4 py-10">
+    {% block content %}
+    {% endblock %}
+  </main>
+
+  <footer class="bg-white border-t py-4 text-center text-sm text-gray-500">
+    &copy; {{ now|date:"Y" }} Curricura. All rights reserved.
+  </footer>
+
+</body>
+</html>

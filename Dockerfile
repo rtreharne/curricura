@@ -9,7 +9,10 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y postgresql-client && apt-get clean
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip setuptools wheel && \
+    pip install -r requirements.txt
+
+RUN python -m spacy download en_core_web_sm
 
 COPY . .
 

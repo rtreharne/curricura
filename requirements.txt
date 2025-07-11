@@ -6,4 +6,8 @@ python-dotenv
 dj-database-url
 celery
 redis
+pandas
+pgvector>=0.2.0
+spacy>=3.7.0
+
 
