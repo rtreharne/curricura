@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,7 +7,8 @@
   <title>{% block title %}Curricura{% endblock %}</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans min-h-screen">
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col">
+
 
   <header class="bg-white shadow-md fixed top-0 left-0 right-0 z-50">
     <div class="container mx-auto px-4 py-4 flex justify-between items-center">
@@ -14,10 +16,10 @@
 
       <!-- Desktop nav -->
       <nav class="hidden md:flex items-center space-x-4">
-        <a href="#features" class="text-gray-600 hover:text-indigo-600 text-sm scroll-link">Features</a>
-        <a href="#integration" class="text-gray-600 hover:text-indigo-600 text-sm scroll-link">Integration</a>
-        <a href="#cta" class="text-gray-600 hover:text-indigo-600 text-sm scroll-link">Why Curricura?</a>
-        <a href="/ingest/upload/" class="text-gray-600 hover:text-indigo-600 text-sm">Upload</a>
+        <a href="/#features" class="text-gray-600 hover:text-indigo-600 text-sm scroll-link">Features</a>
+        <a href="/#integration" class="text-gray-600 hover:text-indigo-600 text-sm scroll-link">Integration</a>
+        <!-- <a href="/#cta" class="text-gray-600 hover:text-indigo-600 text-sm scroll-link">Why Curricura?</a> -->
+        <!-- <a href="/ingest/upload/" class="text-gray-600 hover:text-indigo-600 text-sm">Upload</a> -->
         <a href="/demo/" class="ml-2 inline-block bg-indigo-600 text-white text-sm font-semibold py-2 px-4 rounded hover:bg-indigo-700 transition">Try Demo</a>
       </nav>
 
@@ -34,13 +36,13 @@
     <div id="mobile-menu" class="md:hidden hidden px-4 pb-4">
       <a href="#features" class="block py-2 text-gray-600 hover:text-indigo-600 scroll-link">Features</a>
       <a href="#integration" class="block py-2 text-gray-600 hover:text-indigo-600 scroll-link">Integration</a>
-      <a href="#cta" class="block py-2 text-gray-600 hover:text-indigo-600 scroll-link">Why Curricura?</a>
+      <!-- <a href="#cta" class="block py-2 text-gray-600 hover:text-indigo-600 scroll-link">Why Curricura?</a> -->
       <!-- <a href="/ingest/upload/" class="block py-2 text-gray-600 hover:text-indigo-600">Upload</a> -->
       <a href="/demo/" class="block mt-2 bg-indigo-600 text-white text-sm font-semibold py-2 px-4 rounded hover:bg-indigo-700 transition text-center">Try Demo</a>
     </div>
   </header>
 
-  <main class="container mx-auto px-4 py-10">
+  <main class="container mx-auto px-4 pt-24 pb-10">
     {% block content %}
     {% endblock %}
   </main>
@@ -48,6 +50,8 @@
   <footer class="bg-white border-t py-4 text-center text-sm text-gray-500">
     &copy; {{ now|date:"Y" }} Curricura. All rights reserved.
   </footer>
+
+  <script src="{% static 'js/landing.js' %}"></script>
 
 </body>
 </html>

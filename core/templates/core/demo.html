@@ -1,0 +1,43 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-white px-4 sm:px-6 lg:px-8">
+  <div class="w-full max-w-5xl text-center">
+    <h1 class="text-4xl font-bold text-gray-900 mb-2">Explore Curricura's AI in Action</h1>
+    <p class="text-md text-gray-600 mb-10">
+      Choose a demo mode to see how Curricura intelligently interacts with your course content.
+    </p>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Semantic Search Card -->
+      <div class="border border-gray-200 rounded-2xl shadow hover:shadow-lg transition duration-300 p-6 flex flex-col justify-between items-center text-center bg-gray-50">
+        <div>
+          <div class="text-4xl mb-3">🔍</div>
+          <h2 class="text-2xl font-semibold text-gray-800 mb-1">Semantic Search</h2>
+          <p class="text-gray-600 mb-6">Instantly find relevant topics, files, or transcript moments using natural language.</p>
+        </div>
+        <a href="{% url 'semantic_search_demo' %}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+          Try Semantic Search
+        </a>
+      </div>
+
+      <!-- AI Chat Card -->
+      <div class="border border-gray-200 rounded-2xl shadow hover:shadow-lg transition duration-300 p-6 flex flex-col justify-between items-center text-center bg-gray-50">
+        <div>
+          <div class="text-4xl mb-3">🤖</div>
+          <h2 class="text-2xl font-semibold text-gray-800 mb-1">AI Chat</h2>
+          <p class="text-gray-600 mb-6">Chat with your course — ask for summaries, explanations, or answers to student questions.</p>
+        </div>
+        <a href="{% url 'ai_chat_demo' %}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+          Try AI Chat
+        </a>
+      </div>
+    </div>
+
+    <p class="text-sm text-gray-500 mt-8">
+      Want to try it with your own content? <a href="" class="text-indigo-600 hover:underline">Upload a transcript</a>
+    </p>
+  </div>
+</div>
+{% endblock %}
