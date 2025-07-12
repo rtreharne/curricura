@@ -9,5 +9,12 @@ redis
 pandas
 pgvector>=0.2.0
 spacy>=3.7.0
+openai>=1.10.0
+tiktoken>=0.5.1
+scikit-learn>=1.0
+numpy>=1.24
+
+
+
 
 

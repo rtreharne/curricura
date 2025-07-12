@@ -1,0 +1,23 @@
+{% extends "core/base.html" %}
+{% block content %}
+  <h1>Transcript Search</h1>
+  <form method="get">
+    <input type="text" name="q" value="{{ query }}" placeholder="Search transcripts..." style="width: 400px;">
+    <button type="submit">Search</button>
+  </form>
+
+  {% if results %}
+    <h2>Top Results</h2>
+    <ul>
+      {% for score, transcript in results %}
+        <li style="margin-bottom: 20px;">
+          <strong>{{ transcript.file.name }}</strong> ({{ transcript.get_year_display }})<br>
+          Similarity: {{ score|floatformat:2 }}<br>
+          <p>{{ transcript.cleaned_text|truncatewords:40 }}</p>
+        </li>
+      {% endfor %}
+    </ul>
+  {% elif query %}
+    <p>No results found.</p>
+  {% endif %}
+{% endblock %}

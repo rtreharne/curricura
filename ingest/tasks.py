@@ -2,65 +2,53 @@
 from celery import shared_task
 import csv
 from io import TextIOWrapper
-from .models import TranscriptUpload
-from .utils import deidentify_text
-#from core.utils import generate_embedding  
+
 import time
 import os
 
+
+
+from celery import shared_task
+from .models import TranscriptChunk, VideoTranscript
+from .utils import deidentify_text, generate_embedding
+from django.utils.timezone import now
+
+
 @shared_task
-def add(x, y):
-    return x + y
-
-
-@shared_task(bind=True, max_retries=3, default_retry_delay=2)
-def process_transcript(self, transcript_id):
+def process_transcript(transcript_id, rows):
+    """
+    Each row should be a dict with keys:
+    - 'text': raw transcript text
+    - 'timestamp': HH:MM:SS string
+    """
     try:
-        transcript = TranscriptUpload.objects.get(id=transcript_id)
+        transcript = VideoTranscript.objects.get(id=transcript_id)
+    except VideoTranscript.DoesNotExist:
+        print(f"[ERROR] Transcript with ID {transcript_id} not found.")
+        return
 
-        # Wait for file to exist (sometimes needed in async upload)
-        attempts = 0
-        while not os.path.exists(transcript.file.path) and attempts < 5:
-            time.sleep(1)
-            attempts += 1
+    for i, row in enumerate(rows):
+        text = row['text'].strip()
+        timestamp = row['transcript_timestamp'].strip()
+        transcript_url = row['transcript_url']
 
-        with transcript.file.open("rb") as f:
-            reader = csv.DictReader(TextIOWrapper(f, encoding="utf-8"), delimiter="\t")
-            cleaned_lines = []
+        if len(text.split()) < 3:
+            continue  # Skip trivial rows
 
-            for i, row in enumerate(reader):
-                # Only deidentify the `transcript_text` column
-                original_text = row.get("transcript_text", "")
-                cleaned_text = deidentify_text(original_text)
-                row["transcript_text"] = cleaned_text
-                cleaned_lines.append(row)
+        try:
+            cleaned = deidentify_text(text)
+            embedding = generate_embedding(cleaned)[0]  # single chunk
 
-                if i < 3:  # Print first 3 for debug
-                    print(f"[DEBUG] Row {i} cleaned:")
-                    print(f"  Before: {original_text}")
-                    print(f"  After : {cleaned_text}")
+            TranscriptChunk.objects.create(
+                transcript=transcript,
+                text=text,
+                cleaned_text=cleaned,
+                timestamp=timestamp,
+                embedding=embedding,
+                transcript_url=transcript_url
+            )
+            print(f"[INFO] Created chunk {i} for transcript {transcript_id} at {timestamp}")
 
-        # Reassemble TSV as cleaned_text
-        if cleaned_lines:
-            output = TextIOWrapper(open(os.devnull, 'w'))  # dummy file
-            headers = cleaned_lines[0].keys()
-            from io import StringIO
-            output_buffer = StringIO()
-            writer = csv.DictWriter(output_buffer, fieldnames=headers, delimiter="\t")
-            writer.writeheader()
-            writer.writerows(cleaned_lines)
-            cleaned_text = output_buffer.getvalue()
-        else:
-            cleaned_text = ""
-
-        transcript.cleaned_text = cleaned_text
-        transcript.save()
-
-    except TranscriptUpload.DoesNotExist:
-        print(f"[ERROR] Transcript ID {transcript_id} not found.")
-        raise self.retry(exc=Exception("Transcript not found."))
-
-    except Exception as e:
-        print(f"[ERROR] Unexpected error for ID {transcript_id}: {e}")
-        raise self.retry(exc=e)
+        except Exception as e:
+            print(f"[ERROR] Failed to process chunk {i} for transcript {transcript_id}: {e}")
 

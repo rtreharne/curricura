@@ -1,5 +1,7 @@
 import re
 import spacy
+import os
+from openai import OpenAI
 
 # Load spaCy model and raise max length
 nlp = spacy.load("en_core_web_sm")
@@ -31,30 +33,6 @@ def deidentify_text(text, chunk_size=100000):
                 print(f"NER match: '{ent.text}' → {label}")
         start_idx += chunk_size
 
-    # === Step 2: Regex Fallbacks ===
-    # regex_patterns = [
-    #     (r'\b[A-Z][a-z]+ [A-Z][a-z]+\b', "[NAME]"),
-    #     (r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+', "[EMAIL]"),
-    #     (r'\b\d{1,2}/\d{1,2}/\d{2,4}\b', "[DATE]"),
-    #     (r'\b\d{1,2}:\d{2}(?: ?[APap][Mm])?\b', "[TIME]"),
-    #     (r'https?://\S+', "[URL]"),
-    #     (r"\b[Mm]y name['’]?s (\w+)", "My name is [NAME]"),
-    # ]
-
-    # for pattern, label in regex_patterns:
-    #     if pattern == r"\b[Mm]y name['’]?s (\w+)":
-    #         matches = re.findall(pattern, text)
-    #         for name in matches:
-    #             print(f"Regex match: My name is {name} → My name is [NAME]")
-    #         text = re.sub(pattern, "My name is [NAME]", text)
-    #         continue
-
-    #     for match in re.finditer(pattern, text):
-    #         matched_text = match.group(0)
-    #         spans.append((match.start(), match.end(), label))
-    #         print(f"Regex match: '{matched_text}' → {label}")
-
-    # === Step 3: Merge and Replace ===
     spans.sort()
     final_spans = []
     last_end = -1
@@ -67,3 +45,42 @@ def deidentify_text(text, chunk_size=100000):
         text = text[:start] + label + text[end:]
 
     return text
+
+import tiktoken
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+ENCODING = tiktoken.encoding_for_model("text-embedding-3-small")
+MAX_TOKENS = 8000
+
+def tokenize(text):
+    return ENCODING.encode(text)
+
+def detokenize(tokens):
+    return ENCODING.decode(tokens)
+
+def generate_embedding(text, max_tokens=8000):
+    """
+    Token-aware embedding generator that chunks text safely under token limits.
+    Returns a list of embedding vectors.
+    """
+    tokens = tokenize(text)
+    chunks = [
+        tokens[i:i + max_tokens]
+        for i in range(0, len(tokens), max_tokens)
+    ]
+
+    embeddings = []
+    for i, token_chunk in enumerate(chunks):
+        try:
+            chunk_text = detokenize(token_chunk)
+            response = client.embeddings.create(
+                input=chunk_text,
+                model="text-embedding-3-small"
+            )
+            embedding = response.data[0].embedding
+            embeddings.append(embedding)
+        except Exception as e:
+            print(f"[WARNING] Failed to embed chunk {i}: {e}")
+
+    return embeddings
+
