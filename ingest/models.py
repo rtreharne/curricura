@@ -1,9 +1,11 @@
 from django.db import models
+from pgvector.django import VectorField
     
 
 class VideoTranscript(models.Model):
     YEAR_CHOICES = [(i, f'Year {i}') for i in range(1, 6)]
-
+    course_code = models.CharField(max_length=20, blank=True)
+    course_title = models.CharField(max_length=255, blank=True)
     year = models.IntegerField(choices=YEAR_CHOICES)
     url = models.URLField()
     datetime = models.DateTimeField()
@@ -18,7 +20,7 @@ class TranscriptChunk(models.Model):
     text = models.TextField()
     cleaned_text = models.TextField(blank=True, null=True)
     timestamp = models.CharField(max_length=8)  # HH:MM:SS format
-    embedding = models.JSONField(blank=True, null=True)
+    embedding = VectorField(dimensions=1536, blank=True, null=True)
     transcript_url = models.URLField(blank=True, null=True)
 
     def __str__(self):

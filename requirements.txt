@@ -1,5 +1,5 @@
 Django>=4.2
-psycopg2-binary
+psycopg2-binary>=2.9
 openai
 pgvector
 python-dotenv
@@ -13,6 +13,10 @@ openai>=1.10.0
 tiktoken>=0.5.1
 scikit-learn>=1.0
 numpy>=1.24
+pgvector>=0.2.1
+
+
+
 
 
 

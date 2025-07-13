@@ -1,14 +1,13 @@
-from django.shortcuts import render, redirect
-from ingest.tasks import process_transcript
-from django.db import transaction
-import csv
-from datetime import datetime
-from .models import VideoTranscript
-
-import logging
-logger = logging.getLogger(__name__)
 
 from .forms import TranscriptTSVUploadForm
+
+from django.shortcuts import render, redirect
+from .forms import TranscriptTSVUploadForm
+from .models import VideoTranscript
+from .tasks import process_transcript
+from datetime import datetime
+import csv
+from collections import defaultdict
 
 def upload_transcript_tsv(request):
     if request.method == 'POST':
@@ -16,11 +15,12 @@ def upload_transcript_tsv(request):
         if form.is_valid():
             tsv_file = request.FILES['tsv_file']
             selected_year = int(form.cleaned_data['year'])
+            course_code = form.cleaned_data['course_code']
+            course_title = form.cleaned_data['course_title']
 
             decoded = tsv_file.read().decode('utf-8').splitlines()
             reader = csv.DictReader(decoded, delimiter='\t')
 
-            from collections import defaultdict
             grouped = defaultdict(list)
             for row in reader:
                 video_url = row['video_url'].strip()
@@ -32,10 +32,7 @@ def upload_transcript_tsv(request):
                     'time': row['time'].strip(),
                 })
 
-
-
             for url, rows in grouped.items():
-                print(url, rows)
                 try:
                     dt = datetime.strptime(f"{rows[0]['date']} {rows[0]['time']}", "%m/%d/%Y %I:%M %p")
                 except Exception as e:
@@ -45,7 +42,9 @@ def upload_transcript_tsv(request):
                 vt = VideoTranscript.objects.create(
                     url=url,
                     datetime=dt,
-                    year=selected_year
+                    year=selected_year,
+                    course_code=course_code,
+                    course_title=course_title,
                 )
 
                 task_rows = [

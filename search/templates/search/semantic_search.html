@@ -1,30 +1,87 @@
 {% extends "core/base.html" %}
+{% load static %}
+
 {% block content %}
-<h1>Semantic Search</h1>
+<div class="max-w-5xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
+  <h1 class="text-3xl font-bold text-gray-900 mb-10 text-center">🔍 Semantic Search</h1>
 
-<form method="post" style="margin-bottom: 2em;">
-  {% csrf_token %}
-  <input type="text" name="query" value="{{ query }}" placeholder="Ask a question..." size="60" />
-  <button type="submit">Search</button>
-</form>
+  <form method="get" class="mb-12">
+    <!-- Line 1: Full-width search bar and submit -->
+    <div class="flex flex-col sm:flex-row gap-4 mb-4">
+      <input type="text" name="query" value="{{ query|default:'' }}"
+        placeholder="e.g. How do vaccines stimulate immunity in animals?"
+        class="flex-grow border border-gray-300 rounded-lg px-4 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
 
-{% if results %}
-  <h2>Top Matches</h2>
-  <ul>
-    {% for score, chunk in results %}
-      <li style="margin-bottom: 1.5em;">
-        <strong>{{ chunk.timestamp }}</strong> (Score: {{ score|floatformat:4 }})<br>
-        <p>{{ chunk.text }}</p>
-        <small>
-          From: 
-          <a href="{{ chunk.transcript.url }}" target="_blank">{{ chunk.transcript.url }}</a><br>
-          Date: {{ chunk.transcript.datetime|date:"Y-m-d H:i" }} |
-          Year: {{ chunk.transcript.get_year_display }}
-        </small>
-      </li>
+      <button type="submit"
+        class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+        Search
+      </button>
+    </div>
+
+    <!-- Line 2: Filters and AI Chat button -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <!-- Filters -->
+      <div class="flex flex-col sm:flex-row gap-4 flex-wrap">
+        <select name="sort" class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-indigo-500">
+          <option value="relevance" {% if sort_order == "relevance" %}selected{% endif %}>Most Relevant</option>
+          <option value="newest" {% if sort_order == "newest" %}selected{% endif %}>Most Recent</option>
+          <option value="oldest" {% if sort_order == "oldest" %}selected{% endif %}>Oldest</option>
+        </select>
+
+        <select name="year" class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-indigo-500">
+          <option value="">All Years</option>
+          {% for y in available_years %}
+            <option value="{{ y }}" {% if selected_year == y %}selected{% endif %}>Year {{ y }}</option>
+          {% endfor %}
+        </select>
+
+        <select name="course" class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-indigo-500">
+          <option value="">All Courses</option>
+          {% for course in available_courses %}
+            <option value="{{ course }}" {% if selected_course == course %}selected{% endif %}>
+              {{ course }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- AI Chat switch -->
+      <a href="{% url 'chat:chat_home' %}"
+        class="text-sm inline-block bg-gray-100 text-gray-700 hover:text-indigo-600 px-4 py-2 rounded-lg border border-gray-300 transition whitespace-nowrap">
+        💬 Switch to AI Chat
+      </a>
+    </div>
+  </form>
+
+
+
+  <!-- Results -->
+  <div class="space-y-10">
+    {% for result in results %}
+    <div class="border border-gray-200 rounded-2xl p-6 shadow-sm bg-white hover:shadow-md transition">
+      <div class="flex justify-between items-start text-sm text-gray-500 mb-2">
+        <div>
+          <span class="font-medium text-gray-800">{{ result.course_code }} – {{ result.course_title }} (Year {{ result.year }})</span>
+          <span class="ml-2 text-xs px-2 py-1 rounded-full bg-indigo-100 text-indigo-700">
+            {{ result.source_type }}
+          </span>
+        </div>
+        <div class="text-xs text-gray-400">Relevance: 
+          <span class="text-green-700 font-semibold">{{ result.relevance|floatformat:1 }}%</span>
+        </div>
+      </div>
+      <p class="text-gray-800 leading-relaxed">
+        “{{ result.content|safe }}”
+      </p>
+      <div class="text-xs text-gray-400 mt-4 flex justify-between">
+        <span>
+          {% if result.link %}<a href="{{ result.link }}" target="_blank" class="text-indigo-600 hover:underline">{{ result.link_text }}</a>{% else %}{{ result.link_text }}{% endif %}
+          {% if result.timestamp %} @ {{ result.timestamp }}{% endif %}
+        </span>
+        <span class="text-gray-500">📅 {{ result.date }}</span>
+      </div>
+    </div>
     {% endfor %}
-  </ul>
-{% elif query %}
-  <p>No results found.</p>
-{% endif %}
+  </div>
+</div>
 {% endblock %}

@@ -4,20 +4,18 @@
 {% block content %}
 <div class="relative max-w-5xl mx-auto px-4 py-6 pb-28">
 
-
-  <!-- Semantic Search switch button -->
-    <div class="flex items-center justify-between mb-3">
+  <!-- Header + Back button -->
+  <div class="flex items-center justify-between mb-3">
     <h1 class="text-2xl font-bold text-gray-800">💬 AI Chat Demo – Explore Curricura’s AI in Action</h1>
-    <a href="{% url 'semantic_search_demo' %}" class="text-sm bg-gray-100 text-gray-700 hover:text-indigo-600 px-3 py-1.5 rounded-md border border-gray-300 transition whitespace-nowrap">
-        🔍 Back to Semantic Search
+    <a href="{% url 'search:semantic_search' %}" class="text-sm bg-gray-100 text-gray-700 hover:text-indigo-600 px-3 py-1.5 rounded-md border border-gray-300 transition whitespace-nowrap">
+      🔍 Back to Semantic Search
     </a>
-    </div>
-
+  </div>
 
   <!-- Chat box wrapper -->
   <div class="bg-white rounded-2xl shadow border border-gray-200 p-6 flex flex-col h-[calc(100vh-12rem)] sm:h-[calc(100vh-14rem)]">
 
-    <!-- Filters -->
+    <!-- Filters (non-functional for now) -->
     <div class="flex flex-wrap gap-4 mb-6 overflow-x-auto text-sm">
       <div>
         <label class="block font-semibold text-gray-700 mb-1">Year</label>
@@ -61,40 +59,28 @@
 
     <!-- Chat window -->
     <div id="chatWindow" class="flex-1 overflow-y-auto space-y-6 pr-2">
-      {% for message in messages %}
-        {% if message.sender == "ai" %}
-          <div class="max-w-[60%] bg-gray-100 text-gray-800 px-4 py-3 rounded-xl shadow-sm">
-            {{ message.text|safe }}
-          </div>
-        {% elif message.sender == "user" %}
-          <div class="flex justify-end">
-            <div class="max-w-[60%] bg-indigo-600 text-white px-4 py-3 rounded-xl shadow-sm text-right">
-              {{ message.text }}
-            </div>
-          </div>
-        {% endif %}
-      {% endfor %}
 
-        <!-- AI Thinking Placeholder -->
-        <div id="ai-thinking-placeholder" class="w-full flex mb-4">
-  <div class="bg-gray-100 text-gray-600 px-4 py-3 rounded-xl shadow-sm w-3/5 animate-pulse flex items-center space-x-2">
-    <svg class="w-5 h-5 text-indigo-500 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-    </svg>
-    <span>Thinking...</span>
-  </div>
-</div>
+      <!-- Initial loader (visible on load) -->
+      <div id="ai-thinking-placeholder" class="w-full flex mb-4">
+        <div class="bg-gray-100 text-gray-600 px-4 py-3 rounded-xl shadow-sm w-3/5 animate-pulse flex items-center space-x-2">
+          <svg class="w-5 h-5 text-indigo-500 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+          </svg>
+          <span>Thinking...</span>
+        </div>
+      </div>
+
     </div>
 
-
   </div>
 </div>
 
-<!-- Full-width fixed input bar -->
-<form class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-4 flex gap-2 items-center w-full z-50">
+<!-- Fixed input bar -->
+<form id="chatForm" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-4 flex gap-2 items-center w-full z-50">
   <div class="max-w-5xl w-full mx-auto flex gap-2">
-    <input type="text" placeholder="Type your message..."
+    {% csrf_token %}
+    <input type="text" id="chatInput" placeholder="Type your message..." autocomplete="off"
       class="flex-grow border border-gray-300 rounded-full px-5 py-3 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500" />
     <button type="submit"
       class="bg-indigo-600 text-white px-6 py-3 rounded-full text-base font-semibold hover:bg-indigo-700 transition whitespace-nowrap">
@@ -102,14 +88,11 @@
     </button>
   </div>
 </form>
+
+<div id="initialInstruction" data-message="{{ initial_instruction|default:""|escapejs }}"></div>
+
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/landing.js' %}"></script>
-<script>
-  window.addEventListener("DOMContentLoaded", function () {
-    const chatWindow = document.getElementById("chatWindow");
-    chatWindow.scrollTop = chatWindow.scrollHeight;
-  });
-</script>
+<script src="{% static 'js/chat.js' %}"></script>
 {% endblock %}
