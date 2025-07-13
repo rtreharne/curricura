@@ -1,0 +1,30 @@
+{% extends "core/base.html" %}
+{% block content %}
+<h1>Semantic Search</h1>
+
+<form method="post" style="margin-bottom: 2em;">
+  {% csrf_token %}
+  <input type="text" name="query" value="{{ query }}" placeholder="Ask a question..." size="60" />
+  <button type="submit">Search</button>
+</form>
+
+{% if results %}
+  <h2>Top Matches</h2>
+  <ul>
+    {% for score, chunk in results %}
+      <li style="margin-bottom: 1.5em;">
+        <strong>{{ chunk.timestamp }}</strong> (Score: {{ score|floatformat:4 }})<br>
+        <p>{{ chunk.text }}</p>
+        <small>
+          From: 
+          <a href="{{ chunk.transcript.url }}" target="_blank">{{ chunk.transcript.url }}</a><br>
+          Date: {{ chunk.transcript.datetime|date:"Y-m-d H:i" }} |
+          Year: {{ chunk.transcript.get_year_display }}
+        </small>
+      </li>
+    {% endfor %}
+  </ul>
+{% elif query %}
+  <p>No results found.</p>
+{% endif %}
+{% endblock %}

@@ -1,17 +1,4 @@
 from django.shortcuts import render
-from .utils import search_transcripts
-
-def transcript_search(request):
-    query = request.GET.get('q', '')
-    results = []
-
-    if query:
-        results = search_transcripts(query)
-
-    return render(request, 'core/search.html', {
-        'query': query,
-        'results': results,
-    })
 
 
 def home(request):
