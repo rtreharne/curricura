@@ -8,6 +8,8 @@ from .tasks import process_transcript
 from datetime import datetime
 import csv
 from collections import defaultdict
+import json
+from .utils import save_canvas_object
 
 def upload_transcript_tsv(request):
     if request.method == 'POST':
@@ -69,3 +71,36 @@ def upload_transcript_tsv(request):
 def upload_success(request):
     return render(request, 'ingest/success.html')
 
+
+from .forms import CanvasJSONUploadForm
+from .models import CanvasFile, CanvasPage, CanvasAssignment
+
+def upload_canvas_json(request):
+    if request.method == 'POST':
+        form = CanvasJSONUploadForm(request.POST)
+        if form.is_valid():
+            course = form.cleaned_data['course']
+            files = request.FILES.getlist('json_files')
+
+            for f in files:
+                try:
+                    data = json.load(f)
+                    if isinstance(data, list):
+                        for item in data:
+                            continue
+                            save_canvas_object(item, course)
+                    elif isinstance(data, dict):
+                        continue
+                        save_canvas_object(data, course)
+                except Exception as e:
+                    print(f"[ERROR] Failed to process {f.name}: {e}")
+
+            return redirect('upload_success')
+    else:
+        form = CanvasJSONUploadForm()
+
+    return render(request, 'ingest/upload_canvas.html', {'form': form})
+
+
+def upload_success(request):
+    return render(request, 'ingest/success.html')

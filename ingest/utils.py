@@ -2,6 +2,7 @@ import re
 import spacy
 import os
 from openai import OpenAI
+from .models import CanvasFile, CanvasPage, CanvasAssignment
 
 # Load spaCy model and raise max length
 nlp = spacy.load("en_core_web_sm")
@@ -84,3 +85,35 @@ def generate_embedding(text, max_tokens=8000):
 
     return embeddings
 
+def save_canvas_object(data, course):
+    if 'filename' in data and 'canvas_file_id' in data:
+        CanvasFile.objects.create(
+            course=course,
+            filename=data.get('filename'),
+            canvas_file_id=data.get('canvas_file_id'),
+            text=data.get('text', '')
+        )
+    elif 'title' in data and 'canvas_course_id' in data:
+        CanvasPage.objects.create(
+            course=course,
+            title=data.get('title'),
+            url=data.get('url'),
+            canvas_course_id=data.get('canvas_course_id'),
+            text=data.get('text', '')
+        )
+    elif 'id' in data and 'course_id' in data and 'name' in data:
+        CanvasAssignment.objects.create(
+            course=course,
+            assignment_id=data.get('id'),
+            course_id=data.get('course_id'),
+            name=data.get('name'),
+            html_url=data.get('html_url'),
+            description=data.get('description', ''),
+            points_possible=data.get('points_possible', 0.0),
+            due_at=data.get('due_at'),
+            created_at_canvas=data.get('created_at'),
+            updated_at_canvas=data.get('updated_at'),
+            submission_types=data.get('submission_types', []),
+            external_tool_url=data.get('external_tool_tag_attributes', {}).get('url'),
+            full_json=data
+        )

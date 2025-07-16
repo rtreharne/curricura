@@ -19,3 +19,12 @@ class TranscriptTSVUploadForm(forms.Form):
         choices=[(i, f'Year {i}') for i in range(1, 6)],
         label="Select Year"
     )
+
+from .models import Course
+
+class CanvasJSONUploadForm(forms.Form):
+    course = forms.ModelChoiceField(
+        queryset=Course.objects.all(),
+        label="Select Course",
+        required=True
+    )
