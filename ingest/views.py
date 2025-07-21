@@ -4,7 +4,7 @@ from .forms import TranscriptTSVUploadForm
 from django.shortcuts import render, redirect
 from .forms import TranscriptTSVUploadForm
 from .models import VideoTranscript
-from .tasks import process_transcript
+from .tasks import process_transcript, process_canvas_json
 from datetime import datetime
 import csv
 from collections import defaultdict
@@ -75,31 +75,40 @@ def upload_success(request):
 from .forms import CanvasJSONUploadForm
 from .models import CanvasFile, CanvasPage, CanvasAssignment
 
+import zipfile
+import tempfile
+from .tasks import process_canvas_zip
+import os
+import tempfile
+import shutil
+
+from django.conf import settings
+
 def upload_canvas_json(request):
     if request.method == 'POST':
-        form = CanvasJSONUploadForm(request.POST)
+        form = CanvasJSONUploadForm(request.POST, request.FILES)
         if form.is_valid():
             course = form.cleaned_data['course']
-            files = request.FILES.getlist('json_files')
+            zip_file = request.FILES['zip_file']
 
-            for f in files:
-                try:
-                    data = json.load(f)
-                    if isinstance(data, list):
-                        for item in data:
-                            continue
-                            save_canvas_object(item, course)
-                    elif isinstance(data, dict):
-                        continue
-                        save_canvas_object(data, course)
-                except Exception as e:
-                    print(f"[ERROR] Failed to process {f.name}: {e}")
+            # Save to persistent tmp directory
+            tmp_filename = f"{course.id}_{zip_file.name}"
+            tmp_path = os.path.join(settings.TMP_CANVAS_ZIP_DIR, tmp_filename)
 
+            with open(tmp_path, 'wb+') as destination:
+                for chunk in zip_file.chunks():
+                    destination.write(chunk)
+
+            # Queue task
+            process_canvas_zip.delay(tmp_path, course.id)
             return redirect('upload_success')
     else:
         form = CanvasJSONUploadForm()
 
     return render(request, 'ingest/upload_canvas.html', {'form': form})
+
+
+
 
 
 def upload_success(request):

@@ -1,4 +1,5 @@
 from django import forms
+import os
 
 class TranscriptTSVUploadForm(forms.Form):
     tsv_file = forms.FileField(label="Upload .tsv file")
@@ -22,9 +23,14 @@ class TranscriptTSVUploadForm(forms.Form):
 
 from .models import Course
 
+
 class CanvasJSONUploadForm(forms.Form):
-    course = forms.ModelChoiceField(
-        queryset=Course.objects.all(),
-        label="Select Course",
-        required=True
-    )
+    course = forms.ModelChoiceField(queryset=Course.objects.all())
+    zip_file = forms.FileField(label='Upload ZIP of Canvas JSON files')
+
+    def clean_zip_file(self):
+        file = self.cleaned_data['zip_file']
+        ext = os.path.splitext(file.name)[1].lower()
+        if ext != '.zip':
+            raise forms.ValidationError("Only .zip files are allowed.")
+        return file

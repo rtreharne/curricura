@@ -41,7 +41,12 @@ class CanvasFile(models.Model):
     course = models.ForeignKey('Course', null=True, blank=True, on_delete=models.CASCADE, related_name='canvas_files') 
     canvas_file_id = models.BigIntegerField()
     text = models.TextField()
+    cleaned_text = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    file_url = models.URLField(blank=True, null=True)
+
+    class Meta:
+        unique_together = ('canvas_file_id', 'course')
 
     def __str__(self):
         return self.filename
@@ -50,9 +55,10 @@ class CanvasFile(models.Model):
 class CanvasPage(models.Model):
     title = models.CharField(max_length=255)
     course = models.ForeignKey('Course', null=True, blank=True, on_delete=models.CASCADE, related_name='canvas_pages') 
-    url = models.SlugField()
+    url = models.SlugField(unique=True)
     canvas_course_id = models.BigIntegerField()
     text = models.TextField()
+    cleaned_text = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -66,6 +72,7 @@ class CanvasAssignment(models.Model):
     name = models.CharField(max_length=255)
     html_url = models.URLField()
     description = models.TextField(blank=True)
+    cleaned_description = models.TextField(blank=True, null=True)
     points_possible = models.FloatField()
     due_at = models.DateTimeField(null=True, blank=True)
     created_at_canvas = models.DateTimeField(null=True, blank=True)
@@ -75,5 +82,30 @@ class CanvasAssignment(models.Model):
     full_json = models.JSONField()  # Store full object for traceability
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        unique_together = ('assignment_id', 'canvas_course_id')
+
     def __str__(self):
         return self.name
+
+
+class CanvasChunk(models.Model):
+    PARENT_TYPE_CHOICES = [
+        ('file', 'File'),
+        ('page', 'Page'),
+        ('assignment', 'Assignment')
+    ]
+    parent_type = models.CharField(max_length=20, choices=PARENT_TYPE_CHOICES)
+    parent_id = models.PositiveIntegerField()
+    text = models.TextField()
+    cleaned_text = models.TextField(blank=True, null=True)
+    embedding = VectorField(dimensions=1536, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['parent_type', 'parent_id']),
+        ]
+
+    def __str__(self):
+        return f"{self.parent_type} {self.parent_id}"

@@ -85,35 +85,69 @@ def generate_embedding(text, max_tokens=8000):
 
     return embeddings
 
+from django.db import IntegrityError
+
 def save_canvas_object(data, course):
-    if 'filename' in data and 'canvas_file_id' in data:
-        CanvasFile.objects.create(
-            course=course,
-            filename=data.get('filename'),
-            canvas_file_id=data.get('canvas_file_id'),
-            text=data.get('text', '')
-        )
-    elif 'title' in data and 'canvas_course_id' in data:
-        CanvasPage.objects.create(
-            course=course,
-            title=data.get('title'),
-            url=data.get('url'),
-            canvas_course_id=data.get('canvas_course_id'),
-            text=data.get('text', '')
-        )
-    elif 'id' in data and 'course_id' in data and 'name' in data:
-        CanvasAssignment.objects.create(
-            course=course,
-            assignment_id=data.get('id'),
-            course_id=data.get('course_id'),
-            name=data.get('name'),
-            html_url=data.get('html_url'),
-            description=data.get('description', ''),
-            points_possible=data.get('points_possible', 0.0),
-            due_at=data.get('due_at'),
-            created_at_canvas=data.get('created_at'),
-            updated_at_canvas=data.get('updated_at'),
-            submission_types=data.get('submission_types', []),
-            external_tool_url=data.get('external_tool_tag_attributes', {}).get('url'),
-            full_json=data
-        )
+    try:
+        if 'filename' in data and 'canvas_file_id' in data:
+            raw_text = data.get('text', '')
+            cleaned = deidentify_text(raw_text)
+            CanvasFile.objects.update_or_create(
+                course=course,
+                canvas_file_id=data.get('canvas_file_id'),
+                defaults={
+                    'filename': data.get('filename'),
+                    'file_url': data.get('file_url'),
+                    'text': raw_text,
+                    'cleaned_text': cleaned
+                }
+            )
+
+        elif 'title' in data and 'canvas_course_id' in data:
+            raw_text = data.get('text', '')
+            cleaned = deidentify_text(raw_text)
+            CanvasPage.objects.update_or_create(
+                url=data.get('url'),
+                defaults={
+                    'course': course,
+                    'title': data.get('title'),
+                    'canvas_course_id': data.get('canvas_course_id'),
+                    'text': raw_text,
+                    'cleaned_text': cleaned
+                }
+            )
+
+        elif 'id' in data and 'course_id' in data and 'name' in data:
+            raw_description = data.get('description', '')
+            cleaned_desc = deidentify_text(raw_description)
+            CanvasAssignment.objects.update_or_create(
+                assignment_id=data.get('id'),
+                canvas_course_id=data.get('course_id'),
+                defaults={
+                    'course': course,
+                    'name': data.get('name'),
+                    'html_url': data.get('html_url'),
+                    'description': raw_description,
+                    'cleaned_description': cleaned_desc,
+                    'points_possible': data.get('points_possible', 0.0),
+                    'due_at': data.get('due_at'),
+                    'created_at_canvas': data.get('created_at'),
+                    'updated_at_canvas': data.get('updated_at'),
+                    'submission_types': data.get('submission_types', []),
+                    'external_tool_url': data.get('external_tool_tag_attributes', {}).get('url'),
+                    'full_json': data
+                }
+            )
+    except IntegrityError as e:
+        print(f"[WARNING] Duplicate detected for Canvas object: {e}")
+    except Exception as e:
+        print(f"[ERROR] Failed to save Canvas object: {e}")
+
+def chunk_text(text, max_tokens=300, overlap=50):
+    words = text.split()
+    start = 0
+    while start < len(words):
+        end = start + max_tokens
+        chunk = " ".join(words[start:end])
+        yield chunk
+        start += max_tokens - overlap

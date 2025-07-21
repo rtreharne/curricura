@@ -75,6 +75,7 @@ DATABASES = {
 }
 
 
+DATA_UPLOAD_MAX_NUMBER_FILES = 2500 
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -127,6 +128,8 @@ CELERY_TASK_SERIALIZER = "json"
 # MEDIA
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+TMP_CANVAS_ZIP_DIR = os.path.join(MEDIA_ROOT, 'tmp_canvas_zips')
+os.makedirs(TMP_CANVAS_ZIP_DIR, exist_ok=True)
 
 # LOGGING
 LOGGING = {
@@ -142,3 +145,7 @@ LOGGING = {
         "level": "DEBUG",  # or INFO for less detail
     },
 }
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://curricura.loophole.site",
+]

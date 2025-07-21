@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import TranscriptChunk, VideoTranscript
+from .models import TranscriptChunk, VideoTranscript, CanvasChunk, Course, CanvasFile, CanvasPage, CanvasAssignment
 
 @admin.register(VideoTranscript)
 class VideoTranscriptAdmin(admin.ModelAdmin):
@@ -9,9 +9,6 @@ class VideoTranscriptAdmin(admin.ModelAdmin):
 class TranscriptChunkAdmin(admin.ModelAdmin):
     list_display = ('text', 'timestamp')
     search_fields = ('text',)
-
-from django.contrib import admin
-from .models import Course, CanvasFile, CanvasPage, CanvasAssignment
 
 
 @admin.register(Course)
@@ -40,3 +37,13 @@ class CanvasAssignmentAdmin(admin.ModelAdmin):
     list_display = ('name', 'course', 'assignment_id', 'points_possible', 'due_at', 'created_at_canvas')
     search_fields = ('name', 'description', 'html_url')
     list_filter = ('course', 'due_at', 'created_at_canvas')
+
+@admin.register(CanvasChunk)
+class CanvasChunkAdmin(admin.ModelAdmin):
+    list_display = ('parent_type', 'parent_id', 'short_text', 'created_at')
+    list_filter = ('parent_type', 'created_at')
+    search_fields = ('text', 'cleaned_text')
+
+    def short_text(self, obj):
+        return (obj.cleaned_text or obj.text)[:50] + '...' if obj.text else ''
+    short_text.short_description = "Chunk Preview"

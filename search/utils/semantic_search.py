@@ -1,25 +1,48 @@
-from openai import OpenAI
-from ingest.models import TranscriptChunk
+from ingest.models import TranscriptChunk, CanvasChunk
 from pgvector.django import CosineDistance
+from openai import OpenAI
 import os
 
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
 def get_top_chunks(query, top_n=100):
-    # Embed the query using OpenAI
+    # Embed the query
     response = client.embeddings.create(
         input=query,
         model="text-embedding-3-small"
     )
     query_vec = response.data[0].embedding
 
-    # Query using pgvector similarity (lower = more similar)
-    chunks = (
+    # Transcript chunks
+    transcript_chunks = (
         TranscriptChunk.objects
         .exclude(embedding__isnull=True)
         .annotate(similarity=CosineDistance("embedding", query_vec))
         .order_by("similarity")[:top_n]
     )
+    
+    # Canvas chunks
+    canvas_chunks = (
+        CanvasChunk.objects
+        .exclude(embedding__isnull=True)
+        .annotate(similarity=CosineDistance("embedding", query_vec))
+        .order_by("similarity")[:top_n]
+    )
 
-    # Return tuples of (similarity score, chunk) for the template
-    return [(chunk.similarity, chunk) for chunk in chunks]
+    # Merge and sort by similarity (lower = more similar)
+    combined = [(chunk.similarity, chunk, "transcript") for chunk in transcript_chunks] + \
+               [(chunk.similarity, chunk, "canvas") for chunk in canvas_chunks]
+    combined.sort(key=lambda x: x[0])  # sort by similarity
+    
+    return combined[:top_n]
+
+from ingest.models import CanvasFile, CanvasPage, CanvasAssignment
+
+def resolve_canvas_parent(chunk):
+    if chunk.parent_type == 'file':
+        return CanvasFile.objects.filter(id=chunk.parent_id).first()
+    elif chunk.parent_type == 'page':
+        return CanvasPage.objects.filter(id=chunk.parent_id).first()
+    elif chunk.parent_type == 'assignment':
+        return CanvasAssignment.objects.filter(id=chunk.parent_id).first()
+    return None
