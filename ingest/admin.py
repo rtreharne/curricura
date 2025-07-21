@@ -47,3 +47,30 @@ class CanvasChunkAdmin(admin.ModelAdmin):
     def short_text(self, obj):
         return (obj.cleaned_text or obj.text)[:50] + '...' if obj.text else ''
     short_text.short_description = "Chunk Preview"
+
+
+from .models import YouTubeVideo, YouTubeChunk
+
+class YouTubeChunkInline(admin.TabularInline):
+    model = YouTubeChunk
+    extra = 0
+    readonly_fields = ('text', 'timestamp', 'embedding')
+    can_delete = False
+    show_change_link = True
+
+@admin.register(YouTubeVideo)
+class YouTubeVideoAdmin(admin.ModelAdmin):
+    list_display = ('title', 'url', 'course', 'uploaded_at')
+    search_fields = ('title', 'url', 'course__title')
+    list_filter = ('course', 'uploaded_at')
+    inlines = [YouTubeChunkInline]
+
+@admin.register(YouTubeChunk)
+class YouTubeChunkAdmin(admin.ModelAdmin):
+    list_display = ('video', 'timestamp', 'short_text')
+    search_fields = ('text', 'timestamp', 'video__title')
+    list_filter = ('video',)
+
+    def short_text(self, obj):
+        return obj.text[:80] + ('...' if len(obj.text) > 80 else '')
+    short_text.short_description = 'Text Preview'

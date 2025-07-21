@@ -31,6 +31,12 @@ from ingest.models import VideoTranscript, CanvasFile
 from core.models import School
 import re
 
+import re
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from ingest.models import VideoTranscript, CanvasFile, YouTubeVideo, Course
+from search.utils.semantic_search import get_top_chunks, resolve_canvas_parent
+
 @login_required
 def semantic_search_view(request):
     raw_query = request.GET.get("query", "").strip()
@@ -40,7 +46,7 @@ def semantic_search_view(request):
     selected_school = request.GET.get("school", "").strip()
     sort_order = request.GET.get("sort", "relevance")  # default is relevance
 
-    # Detect GitHub-style filename search
+    # Detect filename search
     filename_query = ""
     query = raw_query
     match = re.search(r'filename:\s*(.+)', raw_query, re.IGNORECASE)
@@ -54,8 +60,6 @@ def semantic_search_view(request):
     available_schools = set()
     search_performed = bool(raw_query)
 
-    from ingest.models import VideoTranscript, CanvasFile
-
     # Determine allowed schools for current user
     user_school_ids = []
     if hasattr(request.user, "profile"):
@@ -63,7 +67,6 @@ def semantic_search_view(request):
         user_school_ids = list(user_schools.values_list("id", flat=True))
         available_schools.update(s.name for s in user_schools)
 
-    # Helper function to filter by school
     def filter_by_school(queryset):
         if selected_school:
             return queryset.filter(course__schools__name=selected_school)
@@ -75,14 +78,18 @@ def semantic_search_view(request):
     if not raw_query:
         transcript_years = filter_by_school(VideoTranscript.objects).values_list("course__year", flat=True).distinct()
         canvas_years = filter_by_school(CanvasFile.objects).values_list("course__year", flat=True).distinct()
+        youtube_years = filter_by_school(YouTubeVideo.objects).values_list("course__year", flat=True).distinct()
         available_years.update(filter(None, transcript_years))
         available_years.update(filter(None, canvas_years))
+        available_years.update(filter(None, youtube_years))
 
         available_courses = Course.objects.filter(
-            schools__in=user_school_ids  # limit to schools user can access
+            schools__in=user_school_ids
         ).distinct()
 
-    # Filename search
+    # ----------------------------
+    # Filename search (Canvas files)
+    # ----------------------------
     if filename_query:
         files = filter_by_school(CanvasFile.objects.filter(filename__icontains=filename_query))
         for f in files:
@@ -91,7 +98,6 @@ def semantic_search_view(request):
             course_title = course.title if course else "Unknown Course"
             course_code = course.code if course else ""
 
-            # Apply dropdown filters
             if selected_year and year != selected_year:
                 continue
             if selected_course and course_title != selected_course:
@@ -114,28 +120,61 @@ def semantic_search_view(request):
                 "popularity": "NA",
             })
 
-        # Sort results
         if sort_order == "newest":
             results.sort(key=lambda r: safe_date(r["date"]), reverse=True)
         elif sort_order == "oldest":
             results.sort(key=lambda r: safe_date(r["date"]))
 
-    # Semantic search
+    # ----------------------------
+    # Semantic search (transcripts + Canvas + YouTube)
+    # ----------------------------
     elif query:
-        top_chunks = get_top_chunks(query)
+        top_chunks = get_top_chunks(query)  # Now returns transcript, canvas, or youtube chunks
         filtered_chunks = []
 
         for score, chunk, source_type in top_chunks:
             course = None
+            source_label = None
+            filename = None
+            link = None
+            link_text = None
+            date = None
+            timestamp = None
+            content = chunk.text
+
+            # ---- Transcript Chunks ----
             if source_type == "transcript":
                 course = chunk.transcript.course
                 if not course:
                     continue
-            else:  # Canvas Content
+                source_label = "Lecture Transcript"
+                link = chunk.transcript_url
+                link_text = "Link to Video"
+                date = chunk.transcript.datetime.date()
+                timestamp = chunk.timestamp
+
+            # ---- YouTube Chunks ----
+            elif source_type == "youtube":
+                video = chunk.video
+                course = video.course
+                if not course:
+                    continue
+                source_label = "YouTube Transcript"
+                link = video.url
+                link_text = "Watch Video"
+                date = video.uploaded_at.date()
+                timestamp = chunk.timestamp
+
+            # ---- Canvas Chunks ----
+            else:
                 parent = resolve_canvas_parent(chunk)
                 if not parent or not parent.course:
                     continue
                 course = parent.course
+                source_label = "Canvas Content"
+                filename = getattr(parent, "filename", None)
+                link = getattr(parent, "file_url", None)
+                link_text = "Open File" if link else None
 
             # School filtering
             if selected_school and not course.schools.filter(name=selected_school).exists():
@@ -146,23 +185,6 @@ def semantic_search_view(request):
             course_title = course.title
             course_code = course.code
             year = str(course.year)
-
-            if source_type == "transcript":
-                link = chunk.transcript_url
-                link_text = "Link to Video"
-                date = chunk.transcript.datetime.date()
-                timestamp = chunk.timestamp
-                filename = None
-                content = chunk.text
-                source_label = "Lecture Transcript"
-            else:
-                filename = getattr(parent, "filename", None)
-                link = getattr(parent, "file_url", None)
-                link_text = "Open File" if link else None
-                date = None
-                timestamp = None
-                content = chunk.text
-                source_label = "Canvas Content"
 
             # Apply dropdown filters
             if selected_year and year != selected_year:
@@ -188,7 +210,6 @@ def semantic_search_view(request):
                 "popularity": "NA",
             })
 
-        # Deduplicate Canvas Content
         seen_filenames = set()
         results = []
         for result in filtered_chunks:
@@ -199,7 +220,6 @@ def semantic_search_view(request):
                 seen_filenames.add(fname)
             results.append(result)
 
-        # Sort results
         if sort_order == "newest":
             results.sort(key=lambda r: safe_date(r["date"]), reverse=True)
         elif sort_order == "oldest":

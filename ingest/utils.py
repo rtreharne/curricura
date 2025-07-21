@@ -151,3 +151,55 @@ def chunk_text(text, max_tokens=300, overlap=50):
         chunk = " ".join(words[start:end])
         yield chunk
         start += max_tokens - overlap
+
+
+import re
+
+import re
+
+def parse_transcript(transcript_text, chunk_word_limit=100, overlap_ratio=0.1):
+    """
+    Parses a raw transcript into ~200-word chunks with overlap.
+    Only the first timestamp of each chunk is kept.
+    - transcript_text: raw transcript text with timestamps and lines.
+    - chunk_word_limit: maximum number of words per chunk (default 200).
+    - overlap_ratio: fraction of overlap between consecutive chunks (default 10%).
+    """
+    # Split lines and identify timestamps
+    lines = transcript_text.splitlines()
+    timestamp_pattern = re.compile(r'^\d{1,2}:\d{2}(?::\d{2})?$')
+
+    entries = []
+    current_timestamp = "0:00"
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        if timestamp_pattern.match(line):
+            current_timestamp = line
+        else:
+            entries.append((current_timestamp, line))
+
+    if not entries:
+        return []
+
+    # Flatten entries into individual words while keeping timestamps
+    flat_entries = []
+    for ts, text in entries:
+        for word in text.split():
+            flat_entries.append((ts, word))
+
+    chunks = []
+    overlap_words = int(chunk_word_limit * overlap_ratio)
+    start = 0
+    total_words = len(flat_entries)
+
+    while start < total_words:
+        end = min(total_words, start + chunk_word_limit)
+        chunk_words = [w for _, w in flat_entries[start:end]]
+        first_timestamp = flat_entries[start][0]
+        chunks.append((first_timestamp, " ".join(chunk_words)))
+        start += chunk_word_limit - overlap_words  # move window with overlap
+
+    return chunks
+

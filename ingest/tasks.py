@@ -144,7 +144,7 @@ def process_canvas_chunks(course_id=None):
     print("[INFO] Canvas chunking complete.")
 
 
-
+@shared_task
 def create_chunks_for_object(parent_type, parent_id, text):
     from .models import CanvasChunk
     from .utils import deidentify_text, generate_embedding
@@ -176,3 +176,39 @@ def create_chunks_for_object(parent_type, parent_id, text):
         except Exception as e:
             print(f"[ERROR] Failed to create chunk for {parent_type} {parent_id}: {e}")
 
+
+
+from .models import YouTubeVideo, YouTubeChunk
+
+
+@shared_task
+def process_youtube_chunks(video_id, chunks):
+    """
+    Each element in `chunks` is a dict with:
+    - 'text'
+    - 'timestamp'
+    """
+    try:
+        video = YouTubeVideo.objects.get(id=video_id)
+    except YouTubeVideo.DoesNotExist:
+        print(f"[ERROR] YouTubeVideo {video_id} not found.")
+        return
+
+    for i, chunk in enumerate(chunks):
+        text = chunk['text'].strip()
+        timestamp = chunk['timestamp']
+
+        if len(text.split()) < 3:
+            continue
+
+        try:
+            embedding = generate_embedding(text)[0]
+            YouTubeChunk.objects.create(
+                video=video,
+                text=text,
+                timestamp=timestamp,
+                embedding=embedding
+            )
+            print(f"[INFO] Created chunk {i} for video {video_id} at {timestamp}")
+        except Exception as e:
+            print(f"[ERROR] Failed chunk {i} for video {video_id}: {e}")

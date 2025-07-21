@@ -1,5 +1,7 @@
 {% extends "core/base.html" %}
 {% load static %}
+{% load youtube_extras %}
+
 
 {% block content %}
 <div class="max-w-5xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
@@ -54,10 +56,14 @@
           <option value="Lecture Transcript" {% if selected_source == "Lecture Transcript" %}selected{% endif %}>
             Lecture Transcripts
           </option>
+          <option value="YouTube Transcript" {% if selected_source == "YouTube Transcript" %}selected{% endif %}>
+            YouTube Transcripts
+          </option>
           <option value="Canvas Content" {% if selected_source == "Canvas Content" %}selected{% endif %}>
             Canvas Content
           </option>
         </select>
+
 
         <select name="school" class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-indigo-500">
           <option value="">All Schools</option>
@@ -117,20 +123,29 @@
 
 
         {% if result.source_type != "Canvas Content" %}
-        <div class="text-xs text-gray-400 mt-4 flex justify-between">
-          <span>
-            {% if result.link %}
+  <div class="text-xs text-gray-400 mt-4 flex justify-between">
+    <span>
+      {% if result.link %}
+            {% if result.source_type == "YouTube Transcript" and result.timestamp %}
+              {# Convert HH:MM:SS to total seconds #}
+              {% with result.timestamp|cut:":" as parts %}
+                {# This won't split properly, so we'll use a filter below #}
+              {% endwith %}
+              <a href="{{ result.link }}&t={{ result.timestamp|youtube_seconds }}" target="_blank"
+                class="text-indigo-600 hover:underline">{{ result.link_text }}</a>
+            {% else %}
               <a href="{{ result.link }}" target="_blank" class="text-indigo-600 hover:underline">{{ result.link_text }}</a>
             {% endif %}
-            {% if result.timestamp %}
-              @ {{ result.timestamp }}
-            {% endif %}
-          </span>
-          {% if result.date %}
-            <span class="text-gray-500">📅 {{ result.date }}</span>
           {% endif %}
-        </div>
+          {% if result.timestamp %}
+            @ {{ result.timestamp }}
+          {% endif %}
+        </span>
+        {% if result.date %}
+          <span class="text-gray-500">📅 {{ result.date }}</span>
         {% endif %}
+      </div>
+    {% endif %}
       </div>
       {% endfor %}
     {% elif search_performed %}

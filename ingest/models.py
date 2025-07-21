@@ -124,3 +124,31 @@ class CanvasChunk(models.Model):
 
     def __str__(self):
         return f"{self.parent_type} {self.parent_id}"
+
+
+class YouTubeVideo(models.Model):
+    course = models.ForeignKey(
+        'Course',
+        on_delete=models.CASCADE,
+        related_name='youtube_videos'
+    )
+    url = models.URLField(unique=True)
+    title = models.CharField(max_length=255, blank=True, null=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title or self.url
+
+
+class YouTubeChunk(models.Model):
+    video = models.ForeignKey(
+        YouTubeVideo,
+        on_delete=models.CASCADE,
+        related_name='chunks'
+    )
+    text = models.TextField()
+    timestamp = models.CharField(max_length=8)  # HH:MM:SS format
+    embedding = VectorField(dimensions=1536, blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.video} @ {self.timestamp}"

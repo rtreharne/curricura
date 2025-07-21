@@ -1,0 +1,35 @@
+{% extends "core/base.html" %}
+{% block content %}
+<div class="max-w-2xl mx-auto bg-white p-10 shadow-xl rounded-2xl mt-10 border border-gray-100">
+  <div class="text-center mb-8">
+    <h1 class="text-3xl font-extrabold text-gray-900 mb-2">🎥 Upload YouTube Transcript</h1>
+    <p class="text-sm text-gray-500">Paste or upload a YouTube transcript for ingestion.</p>
+  </div>
+
+  {% if messages %}
+    <div class="mb-6">
+      {% for message in messages %}
+        <div class="px-4 py-3 rounded-lg text-sm 
+            {% if message.tags == 'error' %} bg-red-50 text-red-700 border border-red-200 
+            {% elif message.tags == 'success' %} bg-green-50 text-green-700 border border-green-200 
+            {% else %} bg-gray-50 text-gray-700 border border-gray-200 {% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <form method="post" class="space-y-6">
+    {% csrf_token %}
+    <div class="space-y-4">
+      {{ form.as_p }}
+    </div>
+    <div class="text-center">
+      <button type="submit"
+              class="inline-flex items-center justify-center bg-indigo-600 text-white font-semibold py-2.5 px-6 rounded-lg shadow hover:bg-indigo-700 transition">
+        Upload Transcript
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}
