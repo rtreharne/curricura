@@ -59,13 +59,23 @@
           </option>
         </select>
 
+        <select name="school" class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-indigo-500">
+          <option value="">All Schools</option>
+          {% for s in available_schools %}
+            <option value="{{ s }}" {% if selected_school == s %}selected{% endif %}>
+              {{ s }}
+            </option>
+          {% endfor %}
+        </select>
+
+
       </div>
 
       <!-- AI Chat Button -->
-      <a href="{% url 'chat:chat_home' %}"
+      <!-- <a href="{% url 'chat:chat_home' %}"
         class="text-sm inline-block bg-gray-100 text-gray-700 hover:text-indigo-600 px-4 py-2 rounded-lg border border-gray-300 transition whitespace-nowrap">
         💬 Switch to AI Chat
-      </a>
+      </a> -->
     </div>
   </form>
 
@@ -76,9 +86,10 @@
       <div class="border border-gray-200 rounded-2xl p-6 shadow-sm bg-white hover:shadow-md transition">
         <div class="flex justify-between items-start text-sm text-gray-500 mb-2">
           <div>
-            <span class="font-medium text-gray-800">
+              <span class="font-medium text-gray-800">
               {{ result.course_code }} – {{ result.course_title }} (Year {{ result.year }})
             </span>
+
             <span class="ml-2 text-xs px-2 py-1 rounded-full {% if result.source_type == 'Lecture Transcript' %}bg-indigo-100 text-indigo-700{% else %}bg-green-100 text-green-700{% endif %}">
               {{ result.source_type }}
             </span>

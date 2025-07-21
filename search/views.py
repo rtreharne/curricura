@@ -3,6 +3,9 @@ import datetime
 from django.utils.safestring import mark_safe
 from django.shortcuts import render
 from .utils.semantic_search import get_top_chunks, resolve_canvas_parent
+from django.contrib.auth.decorators import login_required
+from ingest.models import Course, VideoTranscript, TranscriptChunk, CanvasFile
+
 
 def safe_date(value):
     """
@@ -21,11 +24,20 @@ def highlight_text(text, query):
     highlighted = pattern.sub(r'<mark>\1</mark>', text)
     return mark_safe(highlighted)
 
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from ingest.models import VideoTranscript, CanvasFile
+from core.models import School
+import re
+
+@login_required
 def semantic_search_view(request):
     raw_query = request.GET.get("query", "").strip()
     selected_year = request.GET.get("year", "").strip()
     selected_course = request.GET.get("course", "").strip()
     selected_source = request.GET.get("source", "").strip()
+    selected_school = request.GET.get("school", "").strip()
     sort_order = request.GET.get("sort", "relevance")  # default is relevance
 
     # Detect GitHub-style filename search
@@ -39,38 +51,47 @@ def semantic_search_view(request):
     results = []
     available_years = set()
     available_courses = set()
-    search_performed = bool(raw_query)  # Track any query, not just semantic
+    available_schools = set()
+    search_performed = bool(raw_query)
 
-    from ingest.models import VideoTranscript, CanvasFile, CanvasPage, CanvasAssignment
+    from ingest.models import VideoTranscript, CanvasFile
 
-    # Always populate filters
+    # Determine allowed schools for current user
+    user_school_ids = []
+    if hasattr(request.user, "profile"):
+        user_schools = request.user.profile.schools.all()
+        user_school_ids = list(user_schools.values_list("id", flat=True))
+        available_schools.update(s.name for s in user_schools)
+
+    # Helper function to filter by school
+    def filter_by_school(queryset):
+        if selected_school:
+            return queryset.filter(course__schools__name=selected_school)
+        if user_school_ids:
+            return queryset.filter(course__schools__id__in=user_school_ids)
+        return queryset
+
+    # Populate filter dropdowns
     if not raw_query:
-        # Collect all years
-        transcript_years = VideoTranscript.objects.values_list("year", flat=True).distinct()
-        canvas_years = CanvasFile.objects.values_list("course__year", flat=True).distinct()
+        transcript_years = filter_by_school(VideoTranscript.objects).values_list("course__year", flat=True).distinct()
+        canvas_years = filter_by_school(CanvasFile.objects).values_list("course__year", flat=True).distinct()
         available_years.update(filter(None, transcript_years))
         available_years.update(filter(None, canvas_years))
 
-        # Collect all course titles
-        transcript_courses = VideoTranscript.objects.values_list("course_title", flat=True).distinct()
-        canvas_courses = CanvasFile.objects.values_list("course__title", flat=True).distinct()
-        available_courses.update(filter(None, transcript_courses))
-        available_courses.update(filter(None, canvas_courses))
+        available_courses = Course.objects.filter(
+            schools__in=user_school_ids  # limit to schools user can access
+        ).distinct()
 
     # Filename search
     if filename_query:
-        files = CanvasFile.objects.filter(filename__icontains=filename_query)
+        files = filter_by_school(CanvasFile.objects.filter(filename__icontains=filename_query))
         for f in files:
-            year = str(f.course.year) if f.course else "N/A"
-            course_title = f.course.title if f.course else "Unknown Course"
-            course_code = f.course.code if f.course else ""
-            # Populate filters
-            if year:
-                available_years.add(year)
-            if course_title:
-                available_courses.add(course_title)
+            course = f.course
+            year = str(course.year) if course else "N/A"
+            course_title = course.title if course else "Unknown Course"
+            course_code = course.code if course else ""
 
-            # Apply filters
+            # Apply dropdown filters
             if selected_year and year != selected_year:
                 continue
             if selected_course and course_title != selected_course:
@@ -93,23 +114,40 @@ def semantic_search_view(request):
                 "popularity": "NA",
             })
 
-        # Sorting
+        # Sort results
         if sort_order == "newest":
-            results = sorted(results, key=lambda r: safe_date(r["date"]), reverse=True)
+            results.sort(key=lambda r: safe_date(r["date"]), reverse=True)
         elif sort_order == "oldest":
-            results = sorted(results, key=lambda r: safe_date(r["date"]))
+            results.sort(key=lambda r: safe_date(r["date"]))
 
     # Semantic search
     elif query:
         top_chunks = get_top_chunks(query)
         filtered_chunks = []
 
-        # Build results list
         for score, chunk, source_type in top_chunks:
+            course = None
             if source_type == "transcript":
-                year = str(chunk.transcript.year)
-                course_title = chunk.transcript.course_title
-                course_code = chunk.transcript.course_code
+                course = chunk.transcript.course
+                if not course:
+                    continue
+            else:  # Canvas Content
+                parent = resolve_canvas_parent(chunk)
+                if not parent or not parent.course:
+                    continue
+                course = parent.course
+
+            # School filtering
+            if selected_school and not course.schools.filter(name=selected_school).exists():
+                continue
+            if user_school_ids and not course.schools.filter(id__in=user_school_ids).exists():
+                continue
+
+            course_title = course.title
+            course_code = course.code
+            year = str(course.year)
+
+            if source_type == "transcript":
                 link = chunk.transcript_url
                 link_text = "Link to Video"
                 date = chunk.transcript.datetime.date()
@@ -118,32 +156,15 @@ def semantic_search_view(request):
                 content = chunk.text
                 source_label = "Lecture Transcript"
             else:
-                parent = resolve_canvas_parent(chunk)
-                if parent:
-                    course = parent.course
-                    course_title = course.title if course else "Unknown Course"
-                    course_code = course.code if course else ""
-                    year = str(course.year) if course else "N/A"
-                    filename = getattr(parent, "filename", None)
-                    link = getattr(parent, "file_url", None)
-                    link_text = "Open File" if link else None
-                else:
-                    course_title = "Unknown Course"
-                    course_code = ""
-                    year = "N/A"
-                    filename = None
-                    link = None
-                    link_text = None
+                filename = getattr(parent, "filename", None)
+                link = getattr(parent, "file_url", None)
+                link_text = "Open File" if link else None
                 date = None
                 timestamp = None
                 content = chunk.text
                 source_label = "Canvas Content"
 
-            if year:
-                available_years.add(year)
-            if course_title:
-                available_courses.add(course_title)
-
+            # Apply dropdown filters
             if selected_year and year != selected_year:
                 continue
             if selected_course and course_title != selected_course:
@@ -152,8 +173,6 @@ def semantic_search_view(request):
                 continue
 
             relevance = (1 - score) * 100
-            highlighted_content = highlight_text(content, query)
-
             filtered_chunks.append({
                 "course_code": course_code,
                 "course_title": course_title,
@@ -161,7 +180,7 @@ def semantic_search_view(request):
                 "source_type": source_label,
                 "filename": filename,
                 "relevance": relevance,
-                "content": highlighted_content,
+                "content": highlight_text(content, query),
                 "link": link,
                 "link_text": link_text,
                 "timestamp": timestamp,
@@ -169,34 +188,35 @@ def semantic_search_view(request):
                 "popularity": "NA",
             })
 
-        # Remove duplicates for Canvas Content
+        # Deduplicate Canvas Content
         seen_filenames = set()
-        unique_chunks = []
+        results = []
         for result in filtered_chunks:
             if result["source_type"] == "Canvas Content":
                 fname = result.get("filename")
                 if fname in seen_filenames:
                     continue
                 seen_filenames.add(fname)
-            unique_chunks.append(result)
-        filtered_chunks = unique_chunks
+            results.append(result)
 
-        # Sorting
+        # Sort results
         if sort_order == "newest":
-            results = sorted(filtered_chunks, key=lambda r: safe_date(r["date"]), reverse=True)
+            results.sort(key=lambda r: safe_date(r["date"]), reverse=True)
         elif sort_order == "oldest":
-            results = sorted(filtered_chunks, key=lambda r: safe_date(r["date"]))
+            results.sort(key=lambda r: safe_date(r["date"]))
         else:
-            results = sorted(filtered_chunks, key=lambda r: r["relevance"], reverse=True)
+            results.sort(key=lambda r: r["relevance"], reverse=True)
 
     return render(request, "search/semantic_search.html", {
         "query": raw_query,
         "results": results,
         "search_performed": search_performed,
         "available_years": sorted(available_years),
-        "available_courses": sorted(available_courses),
+        "available_courses": available_courses,
+        "available_schools": sorted(available_schools),
         "selected_year": selected_year,
         "selected_course": selected_course,
         "selected_source": selected_source,
+        "selected_school": selected_school,
         "sort_order": sort_order,
     })

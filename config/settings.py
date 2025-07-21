@@ -149,3 +149,5 @@ LOGGING = {
 CSRF_TRUSTED_ORIGINS = [
     "https://curricura.loophole.site",
 ]
+
+LOGIN_URL = '/login/'

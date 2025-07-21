@@ -2,19 +2,34 @@ from django.db import models
 from pgvector.django import VectorField
 
 class Course(models.Model):
+    schools = models.ManyToManyField(
+        "core.School",
+        related_name="courses",
+        blank=True
+    )
     code = models.CharField(max_length=20, unique=True)
     title = models.CharField(max_length=255)
     year = models.IntegerField(choices=[(i, f'Year {i}') for i in range(1, 6)])
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.code} - {self.title} ({self.year})"
+        return f"{self.code} - {self.title}"
+
     
 
 class VideoTranscript(models.Model):
     YEAR_CHOICES = [(i, f'Year {i}') for i in range(1, 6)]
-    course_code = models.CharField(max_length=20, blank=True)
-    course_title = models.CharField(max_length=255, blank=True)
+
+    # New field (initially nullable)
+    course = models.ForeignKey(
+        'Course',
+        on_delete=models.CASCADE,
+        related_name='video_transcripts',
+        null=True,  # allow null for now
+        blank=True
+    )
+
+
     year = models.IntegerField(choices=YEAR_CHOICES)
     url = models.URLField()
     datetime = models.DateTimeField()

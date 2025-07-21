@@ -109,3 +109,19 @@ def ai_chat_demo(request):
     return render(request, "core/ai_chat_demo.html", {"messages": messages})
 
 
+from django.contrib.auth.views import LoginView
+
+class CustomLoginView(LoginView):
+    template_name = "core/login.html"
+    redirect_authenticated_user = True
+
+
+from django.contrib.auth.views import LogoutView
+
+from django.contrib.auth import logout
+from django.shortcuts import redirect
+
+def custom_logout(request):
+    logout(request)
+    return redirect('/')
+
