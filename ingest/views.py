@@ -27,7 +27,6 @@ def upload_transcript_tsv(request):
         form = TranscriptTSVUploadForm(request.POST, request.FILES, user=request.user)
         if form.is_valid():
             tsv_file = request.FILES['tsv_file']
-            selected_year = int(form.cleaned_data['year'])
             course = form.cleaned_data['course']
 
             decoded = tsv_file.read().decode('utf-8').splitlines()
@@ -56,7 +55,6 @@ def upload_transcript_tsv(request):
                 vt = VideoTranscript.objects.create(
                     url=url,
                     datetime=dt,
-                    year=selected_year,
                     course=course,
                 )
 
