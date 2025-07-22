@@ -11,41 +11,88 @@
     Finally! AI in Higher Education.
   </h2>
   <p class="text-base sm:text-lg text-gray-600 max-w-md sm:max-w-3xl mx-auto mt-4">
-    Improving student experience. Reducing staff workloads.
+    Curricura transforms static course content into a conversational, searchable knowledge base.
   </p>
   <a href="/demo/" class="inline-block mt-8 bg-indigo-600 text-white font-semibold py-3 px-6 rounded hover:bg-indigo-700 transition">Try Demo</a>
 </section>
 
-<section id="features" class="scroll-mt-32 mb-20 bg-white py-20 px-6">
+<section id="overview" class="scroll-mt-32 mb-20 bg-white py-20 px-6">
   <div class="max-w-5xl mx-auto text-center">
-    <h3 class="text-3xl font-bold mb-6 text-indigo-700">What Curricura Does</h3>
+    <h3 class="text-3xl font-bold mb-6 text-indigo-700">What is Curricura?</h3>
     <p class="text-gray-700 text-lg mb-10">
-      Designed for students, teachers, and programme leads. Curricura makes your course searchable, intelligent, and audit-ready — in minutes.
+      Curricura ingests your exported Canvas course content and lecture transcripts, embedding them with AI so you can ask questions in natural language and get precise, context-aware answers.
     </p>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 text-left">
-      {% comment %} Each feature box {% endcomment %}
-      {% for feature in features %}
       <div class="bg-gray-50 p-6 rounded-lg shadow hover:shadow-md transition">
-        <h4 class="text-lg font-semibold text-gray-800 mb-2">{{ feature.title }}</h4>
-        <p class="text-gray-600 text-sm">{{ feature.description }}</p>
+        <h4 class="text-lg font-semibold text-gray-800 mb-2">For Students</h4>
+        <p class="text-gray-600 text-sm">
+          Quickly locate lecture notes, assessments, and study materials without hunting through menus.
+        </p>
       </div>
-      {% endfor %}
+      <div class="bg-gray-50 p-6 rounded-lg shadow hover:shadow-md transition">
+        <h4 class="text-lg font-semibold text-gray-800 mb-2">For Instructors</h4>
+        <p class="text-gray-600 text-sm">
+          Summarise content, identify gaps, and verify the structure of your course delivery.
+        </p>
+      </div>
+      <div class="bg-gray-50 p-6 rounded-lg shadow hover:shadow-md transition">
+        <h4 class="text-lg font-semibold text-gray-800 mb-2">For Curriculum Leads</h4>
+        <p class="text-gray-600 text-sm">
+          Analyse topic coverage across modules and support curriculum mapping and quality assurance.
+        </p>
+      </div>
     </div>
   </div>
 </section>
 
-<section id="integration" class="scroll-mt-32 mb-20 bg-gray-100 py-20 px-6">
-  <div class="max-w-4xl mx-auto text-center">
-    <h3 class="text-3xl font-bold mb-6 text-indigo-700">Integrates Seamlessly</h3>
-    <p class="text-gray-700 text-lg mb-10">Curricura plugs into Canvas and any LTI 1.3 platform. No disruption. No learning curve.</p>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
-      <div class="bg-white rounded-lg shadow p-6">
-        <h4 class="text-lg font-semibold text-indigo-700 mb-2">Canvas-Ready</h4>
-        <p>Built to integrate via LTI 1.3. Works straight away — no dev time needed.</p>
+<section id="how-it-works" class="scroll-mt-32 mb-20 bg-gray-100 py-20 px-6">
+  <div class="max-w-5xl mx-auto text-center">
+    <h3 class="text-3xl font-bold mb-6 text-indigo-700">How It Works</h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
+      <div class="bg-white p-6 rounded-lg shadow">
+        <h4 class="text-lg font-semibold text-indigo-700 mb-2">1. Ingest</h4>
+        <p>Upload a Canvas export and transcript files. Curricura extracts and cleans the content.</p>
       </div>
-      <div class="bg-white rounded-lg shadow p-6">
-        <h4 class="text-lg font-semibold text-indigo-700 mb-2">Private by Design</h4>
-        <p>We don’t store credentials or student names. Everything is pseudonymised and encrypted.</p>
+      <div class="bg-white p-6 rounded-lg shadow">
+        <h4 class="text-lg font-semibold text-indigo-700 mb-2">2. Embed</h4>
+        <p>We chunk and embed content using OpenAI’s models, storing them in a fast, searchable index.</p>
+      </div>
+      <div class="bg-white p-6 rounded-lg shadow">
+        <h4 class="text-lg font-semibold text-indigo-700 mb-2">3. Chat</h4>
+        <p>Ask natural language questions and get accurate, grounded answers from your own materials.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="roadmap" class="scroll-mt-32 mb-20 bg-white py-20 px-6">
+  <div class="max-w-4xl mx-auto text-center">
+    <h3 class="text-3xl font-bold mb-6 text-indigo-700">Curricura Roadmap</h3>
+    <p class="text-gray-700 text-lg mb-10">We are building Curricura step by step to ensure it’s robust, intelligent, and ready for real-world use.</p>
+    <div class="text-left space-y-4">
+      <div class="p-4 bg-gray-50 rounded shadow">
+        <h4 class="font-semibold text-gray-800">Phase 1 – Canvas & Transcript Ingestion</h4>
+        <p class="text-gray-600 text-sm">Upload and parse exported Canvas content and transcript files.</p>
+      </div>
+      <div class="p-4 bg-gray-50 rounded shadow">
+        <h4 class="font-semibold text-gray-800">Phase 2 – Embedding & Vector Indexing</h4>
+        <p class="text-gray-600 text-sm">Store content in a vector database for fast, semantic search.</p>
+      </div>
+      <div class="p-4 bg-gray-50 rounded shadow">
+        <h4 class="font-semibold text-gray-800">Phase 3 – Chat Interface</h4>
+        <p class="text-gray-600 text-sm">Natural language Q&A powered by GPT-4 with RAG architecture.</p>
+      </div>
+      <div class="p-4 bg-gray-50 rounded shadow">
+        <h4 class="font-semibold text-gray-800">Phase 4 – Contextual Enhancements</h4>
+        <p class="text-gray-600 text-sm">Add filtering, transcript navigation, and improved response accuracy.</p>
+      </div>
+      <div class="p-4 bg-gray-50 rounded shadow">
+        <h4 class="font-semibold text-gray-800">Phase 5 – Curriculum Planning Tools</h4>
+        <p class="text-gray-600 text-sm">Visualise topic distribution and support course audits and QA.</p>
+      </div>
+      <div class="p-4 bg-gray-50 rounded shadow">
+        <h4 class="font-semibold text-gray-800">Phase 6 – Admin Tools & Polishing</h4>
+        <p class="text-gray-600 text-sm">Internal dashboards, analytics, and workflow optimisations.</p>
       </div>
     </div>
   </div>
@@ -53,7 +100,7 @@
 
 <section id="cta" class="bg-indigo-50 py-20 px-6 text-center">
   <h3 class="text-3xl font-bold text-indigo-700 mb-4">Ready to See It Work?</h3>
-  <p class="text-gray-700 text-lg mb-6">Try the demo — no login, no pressure.</p>
+  <p class="text-gray-700 text-lg mb-6">Try the demo.</p>
   <a href="/demo/" class="inline-block bg-indigo-600 text-white font-semibold py-3 px-6 rounded hover:bg-indigo-700 transition attention-box">Try Demo</a>
 </section>
 

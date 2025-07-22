@@ -6,6 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Curricura{% endblock %}</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col">
 
@@ -16,12 +18,19 @@
 
       <!-- Desktop nav -->
       <nav class="hidden md:flex items-center space-x-4">
-        <a href="/#features" class="text-gray-600 hover:text-indigo-600 text-sm scroll-link">Features</a>
-        <a href="/#integration" class="text-gray-600 hover:text-indigo-600 text-sm scroll-link">Integration</a>
+
+        <a href="/#overview" class="text-gray-600 hover:text-indigo-600 text-sm scroll-link">Overview</a>
+        <a href="/#how-it-works" class="ext-gray-600 hover:text-indigo-600 text-sm scroll-link">How It Works</a>
+        <a href="/#roadmap" class="ext-gray-600 hover:text-indigo-600 text-sm scroll-link">Roadmap</a>
+
 
         {% if user.is_authenticated %}
          <a href="{% url 'logout' %}" class="text-gray-600 hover:text-indigo-600 text-sm">Logout</a>
         {% endif %}
+
+        <a href="https://github.com/rtreharne/curricura" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
 
 
         <!-- <a href="/#cta" class="text-gray-600 hover:text-indigo-600 text-sm scroll-link">Why Curricura?</a> -->
@@ -40,13 +49,16 @@
 
     <!-- Mobile menu -->
     <div id="mobile-menu" class="md:hidden hidden px-4 pb-4">
-      <a href="#features" class="block py-2 text-gray-600 hover:text-indigo-600 scroll-link">Features</a>
-      <a href="#integration" class="block py-2 text-gray-600 hover:text-indigo-600 scroll-link">Integration</a>
+      <a href="#overview" class="block py-2 text-gray-600 hover:text-indigo-600 scroll-link">Overview</a>
+      <a href="#how-it-works" class="block py-2 text-gray-600 hover:text-indigo-600 scroll-link">How It Works</a>
       <!-- <a href="#cta" class="block py-2 text-gray-600 hover:text-indigo-600 scroll-link">Why Curricura?</a> -->
       <!-- <a href="/ingest/upload/" class="block py-2 text-gray-600 hover:text-indigo-600">Upload</a> -->
         {% if user.is_authenticated %}
           <a href="{% url 'logout' %}" class="text-gray-700 hover:underline">Logout</a>
         {% endif %}
+      <a href="https://github.com/rtreharne/curricura" target="_blank">
+        <i class="fab fa-github"></i>
+      </a>
       <a href="/demo/" class="block mt-2 bg-indigo-600 text-white text-sm font-semibold py-2 px-4 rounded hover:bg-indigo-700 transition text-center">Try Demo</a>
     </div>
 

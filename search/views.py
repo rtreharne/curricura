@@ -75,17 +75,17 @@ def semantic_search_view(request):
         return queryset
 
     # Populate filter dropdowns
-    if not raw_query:
-        transcript_years = filter_by_school(VideoTranscript.objects).values_list("course__year", flat=True).distinct()
-        canvas_years = filter_by_school(CanvasFile.objects).values_list("course__year", flat=True).distinct()
-        youtube_years = filter_by_school(YouTubeVideo.objects).values_list("course__year", flat=True).distinct()
-        available_years.update(filter(None, transcript_years))
-        available_years.update(filter(None, canvas_years))
-        available_years.update(filter(None, youtube_years))
+    #if not raw_query:
+    transcript_years = filter_by_school(VideoTranscript.objects).values_list("course__year", flat=True).distinct()
+    canvas_years = filter_by_school(CanvasFile.objects).values_list("course__year", flat=True).distinct()
+    youtube_years = filter_by_school(YouTubeVideo.objects).values_list("course__year", flat=True).distinct()
+    available_years.update(filter(None, transcript_years))
+    available_years.update(filter(None, canvas_years))
+    available_years.update(filter(None, youtube_years))
 
-        available_courses = Course.objects.filter(
-            schools__in=user_school_ids
-        ).distinct()
+    available_courses = Course.objects.filter(
+        schools__in=user_school_ids
+    ).distinct()
 
     # ----------------------------
     # Filename search (Canvas files)

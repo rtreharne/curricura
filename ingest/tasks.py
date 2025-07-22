@@ -212,3 +212,26 @@ def process_youtube_chunks(video_id, chunks):
             print(f"[INFO] Created chunk {i} for video {video_id} at {timestamp}")
         except Exception as e:
             print(f"[ERROR] Failed chunk {i} for video {video_id}: {e}")
+
+
+from .helpers.youtube import fetch_youtube_data
+from .models import YouTubeVideo, Course
+from .utils import parse_transcript
+
+@shared_task(rate_limit='6/m') 
+def process_youtube(video_url, course_id):
+    data = fetch_youtube_data(video_url)
+    title = data['title']
+    transcript = data['transcript']
+
+    print("TRANSCRIPT", transcript)
+    course = Course.objects.get(id=course_id)
+
+    video = YouTubeVideo.objects.create(course=course, url=video_url, title=title)
+
+    # Parse transcript into chunks
+    raw_chunks = parse_transcript(transcript, chunk_word_limit=200, overlap_ratio=0.1)
+    chunk_data = [{'text': text, 'timestamp': timestamp} for timestamp, text in raw_chunks]
+
+    # Queue async embedding
+    process_youtube_chunks(video.id, chunk_data)

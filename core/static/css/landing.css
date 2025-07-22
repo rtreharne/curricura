@@ -37,3 +37,14 @@
     box-shadow: 0 0 0 0 rgba(79, 70, 229, 0);
   }
 }
+
+.nav-links i {
+  font-size: 1.4rem; /* Adjust size */
+  color: #333;       /* GitHub logo color */
+  transition: color 0.3s ease;
+}
+
+.nav-links i:hover {
+  color: #000;       /* Darker on hover */
+}
+

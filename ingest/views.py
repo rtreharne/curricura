@@ -16,6 +16,7 @@ from datetime import datetime
 import csv
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from .helpers.youtube import fetch_youtube_data
 
 from .forms import TranscriptTSVUploadForm
 from .models import VideoTranscript
@@ -28,6 +29,7 @@ def upload_transcript_tsv(request):
         if form.is_valid():
             tsv_file = request.FILES['tsv_file']
             course = form.cleaned_data['course']
+            year = course.year
 
             decoded = tsv_file.read().decode('utf-8').splitlines()
             reader = csv.DictReader(decoded, delimiter='\t')
@@ -56,6 +58,7 @@ def upload_transcript_tsv(request):
                     url=url,
                     datetime=dt,
                     course=course,
+                    year=year,
                 )
 
                 task_rows = [
@@ -127,29 +130,46 @@ from .models import YouTubeVideo
 from .utils import parse_transcript
 from .tasks import process_youtube_chunks  # We'll add this next
 
-@login_required
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from .forms import YouTubeUploadForm
+from .helpers.youtube import fetch_youtube_data
+from .tasks import process_youtube
+
+
 def upload_youtube(request):
-    if request.method == 'POST':
-        form = YouTubeUploadForm(request.POST)
+    """
+    Handles uploading either a single YouTube URL or a JSON file with multiple URLs.
+    """
+    if request.method == "POST":
+        form = YouTubeUploadForm(request.POST, request.FILES)
         if form.is_valid():
             course = form.cleaned_data['course']
-            url = form.cleaned_data['url']
-            title = form.cleaned_data['title']
-            transcript = form.cleaned_data['transcript']
+            url = form.cleaned_data.get('url')
+            json_links = form.cleaned_data.get('json_links', [])
 
-            # Create video entry
-            video = YouTubeVideo.objects.create(course=course, url=url, title=title)
+            # Build a list of links to process
+            links = [url] if url else json_links
 
-            # Parse transcript into chunks
-            raw_chunks = parse_transcript(transcript, chunk_word_limit=200, overlap_ratio=0.1)
-            chunk_data = [{'text': text, 'timestamp': timestamp} for timestamp, text in raw_chunks]
+            print("LINKS:", links)
 
-            # Queue async embedding
-            process_youtube_chunks.delay(video.id, chunk_data)
+            results = []
+            for link in links:
+                try:
+                    process_youtube.delay(link, course.id)
+                    
+                except Exception as e:
+                    messages.error(request, f"Failed to process {link}: {e}")
 
-            messages.success(request, "YouTube video uploaded and is being processed.")
+            messages.success(
+                request,
+                f"Successfully processed {len(results)} YouTube link(s) for course '{course}'."
+            )
             return redirect('upload_youtube')
+        else:
+            print("Form errors:", form.errors.as_json())
+            messages.error(request, "There were errors with your submission.")
     else:
         form = YouTubeUploadForm()
 
-    return render(request, 'ingest/upload_youtube.html', {'form': form})
+    return render(request, "ingest/upload_youtube.html", {"form": form})
