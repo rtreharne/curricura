@@ -213,9 +213,11 @@ chatForm.addEventListener("submit", async function (e) {
           "X-CSRFToken": getCSRFToken(),
         },
         body: JSON.stringify({
-          query: userText,
-          expansive: expansive,
-        }),
+        query: userText,
+        expansive: expansive,
+        course_id: window.courseId || null,
+      }),
+
       });
 
       const data = await response.json();

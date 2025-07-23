@@ -4,74 +4,26 @@
 {% block content %}
 <div class="relative max-w-5xl mx-auto px-4 py-6 pb-28">
 
-  <!-- Header + Back button -->
-  <div class="flex items-center justify-between mb-3">
-    <h1 class="text-2xl font-bold text-gray-800">💬 AI Chat Demo – Explore Curricura’s AI in Action</h1>
-    <a href="{% url 'search:semantic_search' %}" class="text-sm bg-gray-100 text-gray-700 hover:text-indigo-600 px-3 py-1.5 rounded-md border border-gray-300 transition whitespace-nowrap">
-      🔍 Back to Semantic Search
-    </a>
-  </div>
-
   <!-- Chat box wrapper -->
-  <div class="bg-white rounded-2xl shadow border border-gray-200 p-6 flex flex-col h-[calc(100vh-12rem)] sm:h-[calc(100vh-14rem)]">
+<div class="bg-white rounded-2xl shadow border border-gray-200 p-6 flex flex-col h-[calc(100vh-12rem)] sm:h-[calc(100vh-14rem)] relative">
 
-    <div class="flex items-center gap-3 mb-3">
-      <span class="text-sm text-gray-700">Expansive Answers</span>
-      <label for="expansiveToggle" class="relative inline-flex items-center cursor-pointer">
-        <input type="checkbox" id="expansiveToggle" class="sr-only peer" />
-        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer
-                    peer-checked:after:translate-x-full peer-checked:after:border-white after:content-['']
-                    after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border
-                    after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-      </label>
-    </div>
-
-
-
-    <!-- Filters (non-functional for now) -->
-    <div class="flex flex-wrap gap-4 mb-6 overflow-x-auto text-sm">
-      <div>
-        <label class="block font-semibold text-gray-700 mb-1">Year</label>
-        <select class="border border-gray-300 rounded-md px-3 py-1.5">
-          <option>All</option>
-          <option>Year 1</option>
-          <option>Year 2</option>
-          <option>Year 3</option>
-          <option>Year 4</option>
-        </select>
-      </div>
-
-      <div>
-        <label class="block font-semibold text-gray-700 mb-1">Language</label>
-        <select class="border border-gray-300 rounded-md px-3 py-1.5">
-          <option>English</option>
-          <option>Mandarin</option>
-          <option>Cantonese</option>
-          <option>Spanish</option>
-          <option>German</option>
-          <option>French</option>
-          <option>Italian</option>
-          <option>Urdu</option>
-          <option>Welsh</option>
-        </select>
-      </div>
-
-      <div>
-        <label class="block font-semibold text-gray-700 mb-1">Tone</label>
-        <select class="border border-gray-300 rounded-md px-3 py-1.5">
-          <option>Neutral</option>
-          <option>Hemingway</option>
-          <option>Marvin (Paranoid Android)</option>
-          <option>Shakespeare</option>
-          <option>Chatty Mentor</option>
-          <option>Excited Golden Retriever</option>
-          <option>Academic Journal</option>
-        </select>
-      </div>
-    </div>
 
     <!-- Chat window -->
     <div id="chatWindow" class="flex-1 overflow-y-auto space-y-6 pr-2">
+
+
+      <!-- Floating expand toggle inside chat window -->
+      <div class="absolute bottom-4 right-4 bg-gray-50 border border-gray-200 rounded-full px-4 py-1.5 flex items-center gap-2 shadow-sm">
+        <span class="text-sm text-gray-600">Expand</span>
+        <label for="expansiveToggle" class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" id="expansiveToggle" class="sr-only peer" />
+          <div class="w-12 h-7 bg-gray-300 rounded-full peer-focus:outline-none peer-checked:bg-indigo-600 
+                      after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white 
+                      after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:after:translate-x-5">
+          </div>
+        </label>
+      </div>
+
 
       <!-- Initial loader (visible on load) -->
       <div id="ai-thinking-placeholder" class="w-full flex mb-4">
@@ -89,6 +41,8 @@
   </div>
 </div>
 
+
+
 <!-- Fixed input bar -->
 <form id="chatForm" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-4 flex gap-2 items-center w-full z-50">
   <div class="max-w-5xl w-full mx-auto flex gap-2">
@@ -104,8 +58,17 @@
 
 <div id="initialInstruction" data-message="{{ initial_instruction|default:""|escapejs }}"></div>
 
+
+
+{% if course %}
+<script> window.courseId = {{ course.id }}; </script>
+{% endif %}
+
+
 {% endblock %}
 
 {% block extra_js %}
 <script src="{% static 'js/chat.js' %}"></script>
+
+
 {% endblock %}

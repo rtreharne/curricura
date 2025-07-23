@@ -151,3 +151,11 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 LOGIN_URL = '/login/'
+
+X_FRAME_OPTIONS = "ALLOWALL"
+
+SECURE_CROSS_ORIGIN_OPENER_POLICY = None  # Needed for ALLOWALL to work on some browsers
+
+# Optional: If you want to allow only Canvas to embed
+# Add Content-Security-Policy (CSP) header via middleware:
+CSP_FRAME_ANCESTORS = ["https://canvas.liverpool.ac.uk",]

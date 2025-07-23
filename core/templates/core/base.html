@@ -9,6 +9,21 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
 </head>
+
+<style>
+  body.inside-iframe header {
+    display: none !important;
+  }
+  body.inside-iframe main {
+    padding-top: 2rem; /* Adjust this to match header height */
+  }
+  
+body.inside-iframe .chat-container {
+  height: calc(100vh - 1rem); /* reduce extra spacing since no header */
+}
+</style>
+
+
 <body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col">
 
 
@@ -76,6 +91,19 @@
   </footer>
 
   <!-- <script src="{% static 'js/landing.js' %}"></script> -->
+
+
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    if (window.self !== window.top) {
+      // Inside an iframe
+      document.body.classList.add("inside-iframe");
+    }
+  });
+</script>
+
+
 {% block extra_js %}
 {% endblock %}
 </body>
