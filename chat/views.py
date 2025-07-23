@@ -174,33 +174,46 @@ def ai_chat(request):
         if not query:
             return JsonResponse({"error": "Query cannot be empty"}, status=400)
 
+        # --- Retrieve or create session ---
         chat_session = get_or_create_session(request)
         ChatMessage.objects.create(session=chat_session, is_user=True, message=query)
 
+        # --- Embed query and get top course chunks ---
         query_embedding = embed_query(query)
         top_chunks = get_top_chunks(query_embedding, limit=5)
 
-        context = "\n\n".join([f"[{c['type']}] {c['text']}" for c in top_chunks])
-
-        system_message = (
+        # --- Build semantic context ---
+        context_text = "\n\n".join([f"[{c['type']}] {c['text']}" for c in top_chunks])
+        base_system_prompt = (
             "You are a helpful assistant answering questions based on multiple sources: "
             "lecture transcripts, Canvas content, and YouTube videos. "
             "If the answer is not present, say 'I don't know'.\n\n"
-            f"Context:\n{context}"
+            f"Context:\n{context_text}"
         )
 
         if expansive:
-            system_message = (
+            base_system_prompt = (
                 "You are a helpful assistant. Use the provided course materials where relevant, "
                 "but feel free to incorporate external knowledge if necessary.\n\n"
-                f"Course Context:\n{context}"
+                f"Course Context:\n{context_text}"
             )
 
-        messages = [
-            {"role": "system", "content": system_message},
-            {"role": "user", "content": query},
+        # --- Retrieve last 10 chat messages for memory ---
+        previous_messages = list(
+            chat_session.messages.order_by("-created_at").values("is_user", "message")[:10]
+        )[::-1]  # Reverse to chronological order
+
+        chat_history = [
+            {"role": "user" if m["is_user"] else "assistant", "content": m["message"]}
+            for m in previous_messages
         ]
 
+        # --- Compose messages for OpenAI ---
+        messages = [{"role": "system", "content": base_system_prompt}] + chat_history + [
+            {"role": "user", "content": query}
+        ]
+
+        # --- Call OpenAI ---
         completion = openai_client.chat.completions.create(
             model="gpt-4",
             messages=messages,
