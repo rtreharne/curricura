@@ -226,6 +226,8 @@ chatForm.addEventListener("submit", async function (e) {
       const aiThinking = document.getElementById("ai-thinking-placeholder");
       if (aiThinking) aiThinking.remove();
 
+      console.log("Grouped sources from backend:", data.sources);
+
       // Append AI answer
       appendBubble({
         text: data.answer,

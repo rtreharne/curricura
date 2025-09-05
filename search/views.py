@@ -195,6 +195,18 @@ def semantic_search_view(request):
                 continue
 
             relevance = (1 - score) * 100
+
+            group_key = None
+            if source_type == "transcript":
+                group_key = f"transcript-{chunk.transcript.id}"
+            elif source_type == "youtube":
+                group_key = f"youtube-{chunk.video.id}"
+            else:  # Canvas
+                parent_id = getattr(parent, "id", None)
+                parent_type = getattr(parent, "_meta", None)
+                type_label = parent_type.model_name if parent_type else "canvas"
+                group_key = f"canvas-{type_label}-{parent_id}"
+
             filtered_chunks.append({
                 "course_code": course_code,
                 "course_title": course_title,
@@ -208,24 +220,51 @@ def semantic_search_view(request):
                 "timestamp": timestamp,
                 "date": date,
                 "popularity": "NA",
+                "group_key": group_key,
             })
 
-        seen_filenames = set()
-        results = []
-        for result in filtered_chunks:
-            if result["source_type"] == "Canvas Content":
-                fname = result.get("filename")
-                if fname in seen_filenames:
-                    continue
-                seen_filenames.add(fname)
-            results.append(result)
+        # Group results by group_key
+        groups = {}
+        for chunk in filtered_chunks:
+            key = chunk["group_key"]
+            if key not in groups:
+                groups[key] = {
+                    "course_code": chunk["course_code"],
+                    "course_title": chunk["course_title"],
+                    "year": chunk["year"],
+                    "source_type": chunk["source_type"],
+                    "filename": chunk["filename"],
+                    "link": chunk["link"],
+                    "link_text": chunk["link_text"],
+                    "date": chunk["date"],
+                    "snippets": [],
+                    "relevance_scores": [],
+                    "timestamp": chunk["timestamp"],  # keep first one for now
+                }
+            groups[key]["snippets"].append({
+                "content": chunk["content"],
+                "timestamp": chunk["timestamp"],
+                "link": chunk["link"],
+                "link_text": chunk["link_text"],
+            })
+            groups[key]["relevance_scores"].append(chunk["relevance"])
 
+        # Flatten back into a results list (groups only)
+        results = []
+        for group in groups.values():
+            group["relevance"] = max(group["relevance_scores"]) if group["relevance_scores"] else 0
+            results.append(group)
+
+        # Apply sorting
         if sort_order == "newest":
             results.sort(key=lambda r: safe_date(r["date"]), reverse=True)
         elif sort_order == "oldest":
             results.sort(key=lambda r: safe_date(r["date"]))
-        else:
+        else:  # relevance
             results.sort(key=lambda r: r["relevance"], reverse=True)
+            
+        print(f"Total grouped results: {len(results)}")
+        print(results)
 
     return render(request, "search/semantic_search.html", {
         "query": raw_query,

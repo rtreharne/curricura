@@ -5,6 +5,14 @@ import os
 
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
+import datetime
+
+def safe_date(value):
+    """
+    Ensures a comparable date for sorting, using datetime.date.min if None or invalid.
+    """
+    return value if isinstance(value, (datetime.date, datetime.datetime)) else datetime.date.min
+
 def get_top_chunks(query, top_n=100):
     # Embed the query
     response = client.embeddings.create(

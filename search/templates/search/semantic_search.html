@@ -114,7 +114,7 @@
           </div>
         </div>
 
-        <p class="text-gray-800 leading-relaxed">
+        <div class="text-gray-800 leading-relaxed space-y-3">
           {% if result.source_type == "Canvas Content" %}
             {% if result.link %}
               <a href="{{ result.link }}" target="_blank" class="text-indigo-600 hover:underline font-medium">
@@ -123,38 +123,38 @@
             {% else %}
               Open File: “{{ result.filename }}”
             {% endif %}
-            <br>
-            <span class="block mt-2">“{{ result.content|safe }}”</span>
-          {% else %}
-            “{{ result.content|safe }}”
           {% endif %}
-        </p>
 
+          {% for snip in result.snippets %}
+            <div class="border-l-2 border-gray-300 pl-3 text-sm text-gray-700
+                        {% if forloop.counter > 3 %} hidden extra-snippet{% endif %}">
+              “{{ snip.content|safe }}”
+              {% if snip.link %}
+                {% if result.source_type == "YouTube Transcript" and snip.timestamp %}
+                  <a href="{{ snip.link }}&t={{ snip.timestamp|youtube_seconds }}" target="_blank"
+                    class="ml-2 text-indigo-600 hover:underline">{{ snip.link_text }}</a>
+                {% else %}
+                  <a href="{{ snip.link }}" target="_blank"
+                    class="ml-2 text-indigo-600 hover:underline">{{ snip.link_text }}</a>
+                {% endif %}
+              {% endif %}
+              {% if snip.timestamp %}
+                <span class="text-gray-400">@ {{ snip.timestamp }}</span>
+              {% endif %}
+            </div>
+          {% endfor %}
 
-        {% if result.source_type != "Canvas Content" %}
-  <div class="text-xs text-gray-400 mt-4 flex justify-between">
-    <span>
-      {% if result.link %}
-            {% if result.source_type == "YouTube Transcript" and result.timestamp %}
-              {# Convert HH:MM:SS to total seconds #}
-              {% with result.timestamp|cut:":" as parts %}
-                {# This won't split properly, so we'll use a filter below #}
-              {% endwith %}
-              <a href="{{ result.link }}&t={{ result.timestamp|youtube_seconds }}" target="_blank"
-                class="text-indigo-600 hover:underline">{{ result.link_text }}</a>
-            {% else %}
-              <a href="{{ result.link }}" target="_blank" class="text-indigo-600 hover:underline">{{ result.link_text }}</a>
-            {% endif %}
+          {% if result.snippets|length > 3 %}
+            <button type="button"
+              class="mt-2 text-xs text-indigo-600 hover:underline show-more-btn">
+              Show more ({{ result.snippets|length|add:"-3" }})
+            </button>
           {% endif %}
-          {% if result.timestamp %}
-            @ {{ result.timestamp }}
-          {% endif %}
-        </span>
+        </div>
+
         {% if result.date %}
-          <span class="text-gray-500">📅 {{ result.date }}</span>
+          <div class="text-xs text-gray-400 mt-2">📅 {{ result.date }}</div>
         {% endif %}
-      </div>
-    {% endif %}
       </div>
       {% endfor %}
     {% elif search_performed %}
@@ -175,6 +175,24 @@
     searchBtn.disabled = true;
     searchBtnText.textContent = '';
     searchBtnSpinner.classList.remove('hidden');
+  });
+
+
+
+  // Expand/collapse extra snippets
+  document.addEventListener("click", function (e) {
+    if (e.target.classList.contains("show-more-btn")) {
+      const container = e.target.closest("div");
+      const hiddenSnippets = container.querySelectorAll(".extra-snippet");
+      const isHidden = hiddenSnippets[0]?.classList.contains("hidden");
+      hiddenSnippets.forEach(el => el.classList.toggle("hidden"));
+
+      if (isHidden) {
+        e.target.textContent = "Show less";
+      } else {
+        e.target.textContent = "Show more (" + hiddenSnippets.length + ")";
+      }
+    }
   });
 </script>
 
